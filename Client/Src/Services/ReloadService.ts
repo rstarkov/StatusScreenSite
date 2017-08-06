@@ -7,9 +7,11 @@ interface ReloadDto {
 
 export class ReloadService implements IService {
     readonly Name: string = 'ReloadService';
-    LoadedHash: string | null = null;
+    $Container: Util.Html;
 
-    Start($container: Util.Html): void {
+    private LoadedHash: string | null = null;
+
+    Start(): void {
     }
 
     HandleUpdate(dto: ReloadDto) {

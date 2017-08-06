@@ -11,19 +11,21 @@ interface WeatherDto {
 
 export class WeatherService implements IService {
     readonly Name: string = 'WeatherService';
-    $CurTemp: Util.Html;
-    $MinTemp: Util.Html;
-    $MinTempAt: Util.Html;
-    $MaxTemp: Util.Html;
-    $MaxTempAt: Util.Html;
+    $Container: Util.Html;
 
-    Start($container: Util.Html): void {
+    private $CurTemp: Util.Html;
+    private $MinTemp: Util.Html;
+    private $MinTempAt: Util.Html;
+    private $MaxTemp: Util.Html;
+    private $MaxTempAt: Util.Html;
+
+    Start(): void {
         let $html = $(`
             <div class=cur><span class=cur></span></div>
             <div class=min><span class=min></span> <span class=minAt></span></div>
              <div class=max><span class=max></span> <span class=maxAt></span></div>
         `);
-        $container.append($html);
+        this.$Container.append($html);
         this.$CurTemp = $html.find('span.cur');
         this.$MinTemp = $html.find('span.min');
         this.$MinTempAt = $html.find('span.minAt');

@@ -19,8 +19,10 @@ export class Api {
         this.socket.onmessage = (evt) => {
             let msg: ApiMessage = JSON.parse(evt.data);
             var svc = this.services.get(msg.ServiceName);
-            if (svc)
+            if (svc) {
                 svc.HandleUpdate(msg.Data);
+                svc.$Container.css('visibility', 'visible');
+            }
         };
     }
 

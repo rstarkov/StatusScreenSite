@@ -17,9 +17,10 @@ class App {
         this.services.push(new WeatherService());
 
         for (let svc of this.services) {
-            let div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer');
-            svc.Start(div);
-            $container.append(div);
+            let $div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer').css('visibility', 'hidden');
+            svc.$Container = $div;
+            svc.Start();
+            $container.append($div);
             this.api.RegisterService(svc);
         }
     }
