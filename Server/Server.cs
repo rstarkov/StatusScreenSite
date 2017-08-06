@@ -57,7 +57,7 @@ namespace StatusScreenSite
                 new HEAD(
                     new TITLE("Status Screen Site")
                 ),
-                new BODY { style = "margin:0; padding:0; overflow:hidden" }._(
+                new BODY { style = "margin:0; padding:0; overflow:hidden; background: #000;" }._(
                     new IFRAME { src = "/app.html", style = "display: block; border: none; width: 100vw; height: 100vh;" }
                 )
             );
@@ -70,10 +70,10 @@ namespace StatusScreenSite
                 new HEAD(
                     new TITLE("Status Screen Site"),
                     new LINK { rel = "stylesheet", href = "https://fonts.googleapis.com/css?family=Open+Sans" },
-                    new LINK { rel = "stylesheet", type = "text/css", href = "/app.css" },
+                    new LINK { rel = "stylesheet", type = "text/css", href = getStaticFileUrl("app.css") },
                     new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.20.17/system-production.js" },
                     new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" },
-                    new SCRIPT { src = "/app.js" }
+                    new SCRIPT { src = getStaticFileUrl("app.js") }
                 ),
                 new BODY(
                     new H1("Loading..."),
@@ -83,20 +83,17 @@ namespace StatusScreenSite
             return HttpResponse.Html(html);
         }
 
+        private string getStaticFileUrl(string path)
+        {
+            var info = new FileInfo(PathUtil.AppPathCombine(_settings.StaticPath, path));
+            if (!info.Exists)
+                throw new Exception($"Static file not found: {path}");
+            return $"/{path}?v={info.LastWriteTimeUtc.ToFileTimeUtc()}-{info.Length}";
+        }
+
         private HttpResponse handleStatic(HttpRequest req)
         {
-            return serveStaticFile(req, req.Url.Path);
-        }
-
-        private HttpResponse handleApi(HttpRequest req)
-        {
-            var ws = new ApiWebSocket(this);
-            _sockets.Add(ws);
-            return HttpResponse.WebSocket(ws);
-        }
-
-        private HttpResponse serveStaticFile(HttpRequest req, string path)
-        {
+            var path = req.Url.Path;
             if (path.Contains(".."))
                 throw new HttpNotFoundException();
             var ext = Regex.Match(path, @"\.([\w\d]+)$");
@@ -110,13 +107,14 @@ namespace StatusScreenSite
                 throw new HttpNotFoundException();
             if (!File.Exists(path))
                 throw new HttpNotFoundException();
+            return HttpResponse.File(path, mime, maxAge: 7*86400);
+        }
 
-            var resp = HttpResponse.File(path, mime, maxAge: null, ifModifiedSince: req.Headers.IfModifiedSince);
-            resp.Headers.CacheControl = new[] {
-                new HttpCacheControl { State = HttpCacheControlState.MustRevalidate },
-                new HttpCacheControl { State = HttpCacheControlState.MaxAge, IntParameter = 0 }
-            };
-            return resp;
+        private HttpResponse handleApi(HttpRequest req)
+        {
+            var ws = new ApiWebSocket(this);
+            _sockets.Add(ws);
+            return HttpResponse.WebSocket(ws);
         }
 
         public void SendUpdate(string serviceName, ITypescriptDto dto)
