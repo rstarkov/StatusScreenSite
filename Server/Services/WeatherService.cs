@@ -1,0 +1,95 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Threading;
+using RT.Util;
+using RT.Util.ExtensionMethods;
+
+namespace StatusScreenSite.Services
+{
+    class WeatherService : ServiceBase<WeatherSettings, WeatherDto>
+    {
+        public override string ServiceName => "WeatherService";
+
+        public WeatherService(Server server, WeatherSettings serviceSettings)
+            : base(server, serviceSettings)
+        {
+        }
+
+        public override void Start()
+        {
+            new Thread(thread) { IsBackground = true }.Start();
+        }
+
+        private void thread()
+        {
+            while (true)
+            {
+                try
+                {
+                    var req = new HClient();
+                    var result = req.Get("https://www.cl.cam.ac.uk/research/dtg/weather/current-obs.txt").Expect(HttpStatusCode.OK).DataString;
+                    var datetime = Regex.Match(result, @"at (?<time>\d+:\d\d (AM|PM)) on (?<date>\d+ \w\w\w \d\d):");
+                    var dt = DateTime.ParseExact(datetime.Groups["date"].Value + "@" + datetime.Groups["time"].Value, "dd MMM yy'@'h:mm tt", null);
+                    var curTemp = decimal.Parse(Regex.Match(result, @"Temperature:\s+(?<temp>\d+(\.\d)?) C").Groups["temp"].Value);
+
+                    Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromHours(25));
+                    Settings.Temperatures[DateTime.UtcNow] = curTemp;
+
+                    var dto = new WeatherDto();
+                    dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(3);
+
+                    dto.CurTemperature = Settings.Temperatures.Where(kvp => kvp.Key >= DateTime.UtcNow.AddMinutes(-15)).Average(kvp => kvp.Value);
+
+                    var temps = Settings.Temperatures.OrderBy(kvp => kvp.Key).ToList();
+                    var avg = temps.Select(kvp => (time: kvp.Key, temp: temps.Where(x => x.Key >= kvp.Key.AddMinutes(-7.5) && x.Key <= kvp.Key.AddMinutes(7.5)).Average(x => x.Value))).ToList();
+
+                    var min = avg.MinElement(x => x.temp);
+                    dto.MinTemperature = min.temp;
+                    dto.MinTemperatureAt = getAt(min.time);
+
+                    var max = avg.MaxElement(x => x.temp);
+                    dto.MaxTemperature = max.temp;
+                    dto.MaxTemperatureAt = getAt(max.time);
+
+                    SaveSettings();
+                    SendUpdate(dto);
+                }
+                catch
+                {
+                }
+
+                Thread.Sleep(TimeSpan.FromSeconds(60));
+            }
+        }
+
+        private string getAt(DateTime dt)
+        {
+            string day;
+            if (dt.ToLocalTime().Date == DateTime.Today)
+                day = "today";
+            else if (dt.ToLocalTime().Date == DateTime.Today.AddDays(-1))
+                day = "yesterday";
+            else
+                throw new Exception();
+            return $"{day} at {dt.ToLocalTime():HH:mm}";
+        }
+    }
+
+    class WeatherSettings
+    {
+        public Dictionary<DateTime, decimal> Temperatures = new Dictionary<DateTime, decimal>();
+    }
+
+    class WeatherDto : ITypescriptDto
+    {
+        public DateTime ValidUntilUtc { get; set; }
+        public decimal CurTemperature;
+        public decimal MinTemperature;
+        public string MinTemperatureAt;
+        public decimal MaxTemperature;
+        public string MaxTemperatureAt;
+    }
+}

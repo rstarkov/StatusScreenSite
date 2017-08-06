@@ -1,0 +1,11 @@
+{
+    "name": "weather-etc",
+    "version": "1.0.0",
+    "description": "",
+    "dependencies": {
+        "@types/jquery": "^3.2.11",
+        "@types/plottable": "^1.4.32",
+        "jquery": "3.2.1",
+        "plottable": "3.4.1"
+    }
+}

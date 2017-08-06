@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "system",
+        "sourceMap": true,
+        "outFile": "../Builds/Static/app.js",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "strictNullChecks": true
+    },
+    "files": [
+        "Src/App.ts"
+    ]
+}
