@@ -4,9 +4,11 @@ import { IService } from '../Service'
 interface WeatherDto {
     CurTemperature: number;
     MinTemperature: number;
-    MinTemperatureAt: string;
+    MinTemperatureAtTime: string;
+    MinTemperatureAtDay: string;
     MaxTemperature: number;
-    MaxTemperatureAt: string;
+    MaxTemperatureAtTime: string;
+    MaxTemperatureAtDay: string;
 }
 
 export class WeatherService implements IService {
@@ -15,30 +17,38 @@ export class WeatherService implements IService {
 
     private $CurTemp: Util.Html;
     private $MinTemp: Util.Html;
-    private $MinTempAt: Util.Html;
+    private $MinTempAtTime: Util.Html;
+    private $MinTempAtDay: Util.Html;
     private $MaxTemp: Util.Html;
-    private $MaxTempAt: Util.Html;
+    private $MaxTempAtTime: Util.Html;
+    private $MaxTempAtDay: Util.Html;
 
     Start(): void {
         let $html = $(`
             <div class=cur><span class=cur></span></div>
-            <div class=min><span class=min></span> <span class=minAt></span></div>
-             <div class=max><span class=max></span> <span class=maxAt></span></div>
+            <table>
+                <tr class=min> <td class=temp></td> <td> at </td> <td class=atTime></td> <td class=atDay></td> </tr>
+                <tr class=max> <td class=temp></td> <td> at </td> <td class=atTime></td> <td class=atDay></td> </tr>
+            </table>
         `);
         this.$Container.append($html);
         this.$CurTemp = $html.find('span.cur');
-        this.$MinTemp = $html.find('span.min');
-        this.$MinTempAt = $html.find('span.minAt');
-        this.$MaxTemp = $html.find('span.max');
-        this.$MaxTempAt = $html.find('span.maxAt');
+        this.$MinTemp = $html.find('tr.min td.temp');
+        this.$MinTempAtTime = $html.find('tr.min td.atTime');
+        this.$MinTempAtDay = $html.find('tr.min td.atDay');
+        this.$MaxTemp = $html.find('tr.max td.temp');
+        this.$MaxTempAtTime = $html.find('tr.max td.atTime');
+        this.$MaxTempAtDay = $html.find('tr.max td.atDay');
     }
 
     HandleUpdate(dto: WeatherDto) {
         this.$CurTemp.text(this.niceTemp(dto.CurTemperature));
         this.$MinTemp.text(this.niceTemp(dto.MinTemperature));
-        this.$MinTempAt.text(dto.MinTemperatureAt);
+        this.$MinTempAtTime.text(dto.MinTemperatureAtTime);
+        this.$MinTempAtDay.text(dto.MinTemperatureAtDay);
         this.$MaxTemp.text(this.niceTemp(dto.MaxTemperature));
-        this.$MaxTempAt.text(dto.MaxTemperatureAt);
+        this.$MaxTempAtTime.text(dto.MaxTemperatureAtTime);
+        this.$MaxTempAtDay.text(dto.MaxTemperatureAtDay);
     }
 
     private niceTemp(temp: number): string {

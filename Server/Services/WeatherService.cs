@@ -48,11 +48,13 @@ namespace StatusScreenSite.Services
 
                     var min = avg.MinElement(x => x.temp);
                     dto.MinTemperature = min.temp;
-                    dto.MinTemperatureAt = getAt(min.time);
+                    dto.MinTemperatureAtTime = $"{min.time.ToLocalTime():HH:mm}";
+                    dto.MinTemperatureAtDay = min.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
                     var max = avg.MaxElement(x => x.temp);
                     dto.MaxTemperature = max.temp;
-                    dto.MaxTemperatureAt = getAt(max.time);
+                    dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
+                    dto.MaxTemperatureAtDay = min.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
                     SaveSettings();
                     SendUpdate(dto);
@@ -63,18 +65,6 @@ namespace StatusScreenSite.Services
 
                 Thread.Sleep(TimeSpan.FromSeconds(60));
             }
-        }
-
-        private string getAt(DateTime dt)
-        {
-            string day;
-            if (dt.ToLocalTime().Date == DateTime.Today)
-                day = "today";
-            else if (dt.ToLocalTime().Date == DateTime.Today.AddDays(-1))
-                day = "yesterday";
-            else
-                throw new Exception();
-            return $"{day} at {dt.ToLocalTime():HH:mm}";
         }
     }
 
@@ -88,8 +78,8 @@ namespace StatusScreenSite.Services
         public DateTime ValidUntilUtc { get; set; }
         public decimal CurTemperature;
         public decimal MinTemperature;
-        public string MinTemperatureAt;
+        public string MinTemperatureAtTime, MinTemperatureAtDay;
         public decimal MaxTemperature;
-        public string MaxTemperatureAt;
+        public string MaxTemperatureAtTime, MaxTemperatureAtDay;
     }
 }

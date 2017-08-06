@@ -3,8 +3,11 @@
     color: white;
     padding: 0;
     margin: 0;
-    font-size: 4vmin;
+    font-size: 5vmin;
     font-family: 'Open Sans';
+}
+
+body {
 }
 
 div#Container {
@@ -16,13 +19,19 @@ div#Container {
 }
 
 div.ServiceContainer {
-    padding: 2vmin;
+    padding: 3vmin;
+    padding-bottom: 2vmin;
     border: 1px solid #444;
+}
+
+
+
+div#WeatherService {
 }
 
 div#WeatherService div.cur {
     text-align: center;
-    margin-bottom: 1vmin;
+    margin-bottom: 2vmin;
 }
 div#WeatherService div.cur span {
     font-size: 200%;
@@ -35,6 +44,24 @@ div#WeatherService div.min span {
 
 div#WeatherService div.max span {
     color: #be8446;
+}
+
+div#WeatherService table {
+    border-collapse: collapse;
+    border: none;
+}
+
+div#WeatherService table td {
+    padding-right: 2vmin;
+    color: #777;
+}
+
+div#WeatherService table td.atDay {
+    padding-right: 0;
+}
+
+div#WeatherService table td.temp, div#WeatherService table td.atTime {
+    color: #ddd;
 }
 
 div#ReloadService {
