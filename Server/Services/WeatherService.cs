@@ -35,7 +35,7 @@ namespace StatusScreenSite.Services
                     var dt = DateTime.ParseExact(datetime.Groups["date"].Value + "@" + datetime.Groups["time"].Value, "dd MMM yy'@'h:mm tt", null);
                     var curTemp = decimal.Parse(Regex.Match(result, @"Temperature:\s+(?<temp>\d+(\.\d)?) C").Groups["temp"].Value);
 
-                    Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromHours(25));
+                    Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromHours(48));
                     Settings.Temperatures[DateTime.UtcNow] = curTemp;
 
                     var dto = new WeatherDto();
@@ -46,15 +46,15 @@ namespace StatusScreenSite.Services
                     var temps = Settings.Temperatures.OrderBy(kvp => kvp.Key).ToList();
                     var avg = temps.Select(kvp => (time: kvp.Key, temp: temps.Where(x => x.Key >= kvp.Key.AddMinutes(-7.5) && x.Key <= kvp.Key.AddMinutes(7.5)).Average(x => x.Value))).ToList();
 
-                    var min = avg.MinElement(x => x.temp);
+                    var min = findExtreme(avg, seq => seq.MinElement(x => x.temp));
                     dto.MinTemperature = min.temp;
                     dto.MinTemperatureAtTime = $"{min.time.ToLocalTime():HH:mm}";
                     dto.MinTemperatureAtDay = min.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
-                    var max = avg.MaxElement(x => x.temp);
+                    var max = findExtreme(avg, seq => seq.MaxElement(x => x.temp));
                     dto.MaxTemperature = max.temp;
                     dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
-                    dto.MaxTemperatureAtDay = min.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
+                    dto.MaxTemperatureAtDay = max.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
                     SaveSettings();
                     SendUpdate(dto);
@@ -65,6 +65,19 @@ namespace StatusScreenSite.Services
 
                 Thread.Sleep(TimeSpan.FromSeconds(60));
             }
+        }
+
+        private (DateTime time, decimal temp) findExtreme(List<(DateTime time, decimal temp)> seq, Func<IEnumerable<(DateTime time, decimal temp)>, (DateTime time, decimal temp)> getExtreme)
+        {
+            var today = DateTime.Today;
+            var yesterday = DateTime.Today.AddDays(-1);
+            var seqToday = seq.Where(s => s.time.ToLocalTime().Date == today);
+            var seqYesterday = seq.Where(s => s.time.ToLocalTime().Date == yesterday);
+            var result = getExtreme(seqToday);
+            if (result.time > DateTime.UtcNow.AddHours(-2) && seqYesterday.Any())
+                return getExtreme(seqYesterday);
+            else
+                return result;
         }
     }
 
