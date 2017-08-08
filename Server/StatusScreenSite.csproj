@@ -59,6 +59,7 @@
     <Compile Include="Server.cs" />
     <Compile Include="ServiceBase.cs" />
     <Compile Include="Services\ReloadService.cs" />
+    <Compile Include="Services\PingService.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="TypescriptDto.cs" />
     <Compile Include="Services\WeatherService.cs" />

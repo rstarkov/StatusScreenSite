@@ -2,6 +2,7 @@ import { Api } from 'Api'
 import { IService } from 'Service'
 import { ReloadService } from 'Services/ReloadService'
 import { WeatherService } from 'Services/WeatherService'
+import { PingService } from 'Services/PingService'
 
 class App {
     api: Api = new Api();
@@ -15,6 +16,7 @@ class App {
 
         this.services.push(new ReloadService());
         this.services.push(new WeatherService());
+        this.services.push(new PingService());
 
         for (let svc of this.services) {
             let $div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer').css('visibility', 'hidden');

@@ -11,5 +11,6 @@ namespace StatusScreenSite
         public string StaticPath = @"..\Static";
 
         public WeatherSettings WeatherSettings = new WeatherSettings();
+        public PingSettings PingSettings = new PingSettings();
     }
 }
