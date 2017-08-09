@@ -46,12 +46,12 @@ namespace StatusScreenSite.Services
                     var temps = Settings.Temperatures.OrderBy(kvp => kvp.Key).ToList();
                     var avg = temps.Select(kvp => (time: kvp.Key, temp: temps.Where(x => x.Key >= kvp.Key.AddMinutes(-7.5) && x.Key <= kvp.Key.AddMinutes(7.5)).Average(x => x.Value))).ToList();
 
-                    var min = findExtreme(avg, seq => seq.MinElement(x => x.temp));
+                    var min = findExtreme(avg, 5, seq => seq.MinElement(x => x.temp));
                     dto.MinTemperature = min.temp;
                     dto.MinTemperatureAtTime = $"{min.time.ToLocalTime():HH:mm}";
                     dto.MinTemperatureAtDay = min.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
-                    var max = findExtreme(avg, seq => seq.MaxElement(x => x.temp));
+                    var max = findExtreme(avg, 12, seq => seq.MaxElement(x => x.temp));
                     dto.MaxTemperature = max.temp;
                     dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
                     dto.MaxTemperatureAtDay = max.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
@@ -67,14 +67,14 @@ namespace StatusScreenSite.Services
             }
         }
 
-        private (DateTime time, decimal temp) findExtreme(List<(DateTime time, decimal temp)> seq, Func<IEnumerable<(DateTime time, decimal temp)>, (DateTime time, decimal temp)> getExtreme)
+        private (DateTime time, decimal temp) findExtreme(List<(DateTime time, decimal temp)> seq, int todayLimit, Func<IEnumerable<(DateTime time, decimal temp)>, (DateTime time, decimal temp)> getExtreme)
         {
             var today = DateTime.Today;
             var yesterday = DateTime.Today.AddDays(-1);
-            var seqToday = seq.Where(s => s.time.ToLocalTime().Date == today);
-            var seqYesterday = seq.Where(s => s.time.ToLocalTime().Date == yesterday);
+            var seqToday = seq.Where(s => s.time.ToLocalTime().Date == today).Reverse();
+            var seqYesterday = seq.Where(s => s.time.ToLocalTime().Date == yesterday).Reverse();
             var result = getExtreme(seqToday);
-            if (result.time > DateTime.UtcNow.AddHours(-2) && seqYesterday.Any())
+            if ((result.time > DateTime.UtcNow.AddHours(-2) || DateTime.Now.Hour <= todayLimit) && seqYesterday.Any())
                 return getExtreme(seqYesterday);
             else
                 return result;
