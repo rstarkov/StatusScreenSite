@@ -70,7 +70,6 @@ namespace StatusScreenSite
             var html = new HTML(
                 new HEAD(
                     new TITLE("Status Screen Site"),
-                    new LINK { rel = "stylesheet", href = "https://fonts.googleapis.com/css?family=Open+Sans" },
                     new LINK { rel = "stylesheet", type = "text/css", href = getStaticFileUrl("app.css") },
                     new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.20.17/system-production.js" },
                     new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" },

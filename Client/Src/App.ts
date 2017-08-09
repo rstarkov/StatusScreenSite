@@ -3,10 +3,12 @@ import { IService } from 'Service'
 import { ReloadService } from 'Services/ReloadService'
 import { WeatherService } from 'Services/WeatherService'
 import { PingService } from 'Services/PingService'
+import * as Util from 'Util'
 
-class App {
-    api: Api = new Api();
-    services: IService[] = [];
+export class App {
+    private api: Api = new Api(this);
+    private services: IService[] = [];
+    private $DisconnectedOverlay: Util.Html
 
     Start(): void {
         this.api.Start();
@@ -25,6 +27,13 @@ class App {
             $container.append($div);
             this.api.RegisterService(svc);
         }
+
+        this.$DisconnectedOverlay = $('<div id=DisconnectedOverlay><div></div></div>').css('visibility', 'hidden');
+        $body.append(this.$DisconnectedOverlay);
+    }
+
+    ShowDisconnected(show: boolean): void {
+        this.$DisconnectedOverlay.css('visibility', show ? 'visible' : 'hidden');
     }
 }
 
