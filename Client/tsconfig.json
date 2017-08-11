@@ -5,8 +5,7 @@
         "sourceMap": true,
         "outFile": "../Builds/Static/app.js",
         "noImplicitAny": true,
-        "noImplicitReturns": true,
-        "strictNullChecks": true
+        "noImplicitReturns": true
     },
     "files": [
         "Src/App.ts"

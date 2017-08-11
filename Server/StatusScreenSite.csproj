@@ -63,6 +63,7 @@
     <Compile Include="Settings.cs" />
     <Compile Include="TypescriptDto.cs" />
     <Compile Include="Services\WeatherService.cs" />
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

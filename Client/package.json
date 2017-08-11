@@ -5,7 +5,9 @@
     "dependencies": {
         "@types/jquery": "^3.2.11",
         "@types/plottable": "^1.4.32",
+        "@types/underscore": "^1.8.1",
         "jquery": "3.2.1",
-        "plottable": "3.4.1"
+        "plottable": "3.4.1",
+        "underscore": "^1.8.3"
     }
 }

@@ -71,8 +71,12 @@ namespace StatusScreenSite
                 new HEAD(
                     new TITLE("Status Screen Site"),
                     new LINK { rel = "stylesheet", type = "text/css", href = getStaticFileUrl("app.css") },
+                    new LINK { rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/plottable.js/3.4.1/plottable.css" },
                     new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.20.17/system-production.js" },
                     new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" },
+                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min.js" },
+                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" },
+                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/plottable.js/3.4.1/plottable.js" },
                     new SCRIPT { src = getStaticFileUrl("app.js") }
                 ),
                 new BODY(

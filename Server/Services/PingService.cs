@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.NetworkInformation;
-using System.Text.RegularExpressions;
 using System.Threading;
-using RT.Util;
-using RT.Util.ExtensionMethods;
 
 namespace StatusScreenSite.Services
 {
     class PingService : ServiceBase<PingSettings, PingDto>
     {
         public override string ServiceName => "PingService";
+        private Queue<int?> _recentPings = new Queue<int?>();
 
         public PingService(Server server, PingSettings serviceSettings)
             : base(server, serviceSettings)
@@ -37,9 +33,14 @@ namespace StatusScreenSite.Services
                     var dto = new PingDto();
                     dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromSeconds(15);
                     if (response.Status == IPStatus.Success)
-                        dto.Last = (int) response.RoundtripTime;
+                        dto.Last = (int) Math.Min(response.RoundtripTime, 2000);
                     else
                         dto.Last = null;
+
+                    _recentPings.Enqueue(dto.Last);
+                    while (_recentPings.Count > 24)
+                        _recentPings.Dequeue();
+                    dto.Recent = _recentPings.ToArray();
 
                     SendUpdate(dto);
                 }
@@ -47,7 +48,7 @@ namespace StatusScreenSite.Services
                 {
                 }
 
-                Thread.Sleep(start.AddSeconds(5) - DateTime.UtcNow);
+                Util.SleepUntil(start.AddSeconds(5));
             }
         }
     }
@@ -61,5 +62,6 @@ namespace StatusScreenSite.Services
     {
         public DateTime ValidUntilUtc { get; set; }
         public int? Last;
+        public int?[] Recent;
     }
 }
