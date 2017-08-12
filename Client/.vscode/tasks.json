@@ -17,7 +17,7 @@
         {
             "taskName": "(Build TypeScript)",
             "type": "shell",
-            "command": "tsc --project tsconfig.json",
+            "command": "node_modules/.bin/webpack -p --config webpack.config.js",
             "problemMatcher": [
                 "$tsc"
             ]
