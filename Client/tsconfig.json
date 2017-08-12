@@ -9,8 +9,8 @@
         "lib": [
             "dom",
             "es6",
-            "DOM.Iterable",
-            "ScriptHost"
+            "es2015.iterable",
+            "scripthost"
         ]
     }
 }
