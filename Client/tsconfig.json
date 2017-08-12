@@ -1,10 +1,16 @@
 {
     "compilerOptions": {
-        "target": "es6",
+        "target": "es5",
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
         //"noUnusedLocals": true,
         //"allowUnreachableCode": true,
+        "lib": [
+            "dom",
+            "es6",
+            "DOM.Iterable",
+            "ScriptHost"
+        ]
     }
 }
