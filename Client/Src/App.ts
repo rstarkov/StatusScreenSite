@@ -1,9 +1,10 @@
-import { Api } from 'Api'
-import { IService } from 'Service'
-import { ReloadService } from 'Services/ReloadService'
-import { WeatherService } from 'Services/WeatherService'
-import { PingService } from 'Services/PingService'
-import * as Util from 'Util'
+import { Api } from './Api'
+import { IService } from './Service'
+import { ReloadService } from './Services/ReloadService'
+import { WeatherService } from './Services/WeatherService'
+import { PingService } from './Services/PingService'
+import * as Util from './Util'
+import * as $ from 'jquery'
 
 export class App {
     private api: Api = new Api(this);
@@ -37,7 +38,7 @@ export class App {
     }
 }
 
-export function main(): void {
+(function (): void {
     let app = new App();
     app.Start();
-}
+})();

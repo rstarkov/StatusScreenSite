@@ -1,5 +1,5 @@
-import { IService } from 'Service'
-import { App } from 'App'
+import { IService } from './Service'
+import { App } from './App'
 
 export class Api {
     private app: App;

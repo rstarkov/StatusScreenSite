@@ -1,5 +1,8 @@
 import * as Util from '../Util'
 import { IService } from '../Service'
+import * as _ from 'lodash';
+import * as d3 from 'd3';
+import 'plottable';
 
 interface PingDto {
     Last: number | null;
@@ -42,6 +45,7 @@ export class PingService implements IService {
 
     HandleUpdate(dto: PingDto) {
         this.$Last.text(dto.Last == null ? '∞' : dto.Last.toString());
-        this._data.data(_(dto.Recent).map((v, i) => { return { x: 24 - dto.Recent.length + i, y: v }; }));
+        let values = _(dto.Recent).map((v, i) => { return { x: 24 - dto.Recent.length + i, y: v }; });
+        this._data.data(_.toArray(values));
     }
 }

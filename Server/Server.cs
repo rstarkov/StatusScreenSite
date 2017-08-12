@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RT.Servers;
 using RT.TagSoup;
 using RT.Util;
@@ -71,20 +73,32 @@ namespace StatusScreenSite
                 new HEAD(
                     new TITLE("Status Screen Site"),
                     new LINK { rel = "stylesheet", type = "text/css", href = getStaticFileUrl("app.css") },
-                    new LINK { rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/plottable.js/3.4.1/plottable.css" },
-                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.20.17/system-production.js" },
-                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" },
-                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/d3/4.10.0/d3.min.js" },
-                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js" },
-                    new SCRIPT { src = "https://cdnjs.cloudflare.com/ajax/libs/plottable.js/3.4.1/plottable.js" },
-                    new SCRIPT { src = getStaticFileUrl("app.js") }
+                    new LINK { rel = "stylesheet", type = "text/css", href = "https://cdnjs.cloudflare.com/ajax/libs/plottable.js/3.4.1/plottable.min.css" },
+                    getScriptsFromManifest()
                 ),
                 new BODY(
                     new H1("Loading..."),
-                    new SCRIPTLiteral(@"System.import('App').then(function(m) { m.main(); });")
+                    new SCRIPT { src = getStaticFileUrl("app.js") }
                 )
             );
             return HttpResponse.Html(html);
+        }
+
+        private static string _manifestPath;
+        private static DateTime _manifestLastWrite;
+        private static List<SCRIPT> _manifestScripts;
+
+        private IEnumerable<SCRIPT> getScriptsFromManifest()
+        {
+            if (_manifestPath == null)
+                _manifestPath = PathUtil.AppPathCombine(_settings.StaticPath, "manifest.json");
+            if (_manifestScripts == null || _manifestLastWrite != File.GetLastWriteTimeUtc(_manifestPath))
+            {
+                IEnumerable<KeyValuePair<string, JToken>>  manifest = JObject.Parse(File.ReadAllText(_manifestPath));
+                _manifestLastWrite = File.GetLastWriteTimeUtc(_manifestPath);
+                _manifestScripts = manifest.Where(tkn => tkn.Key != "main.js").Select(tkn => new SCRIPT { src = tkn.Value.Value<string>() }).ToList();
+            }
+            return _manifestScripts;
         }
 
         private string getStaticFileUrl(string path)
@@ -111,7 +125,7 @@ namespace StatusScreenSite
                 throw new HttpNotFoundException();
             if (!File.Exists(path))
                 throw new HttpNotFoundException();
-            return HttpResponse.File(path, mime, maxAge: 7*86400);
+            return HttpResponse.File(path, mime, maxAge: 7 * 86400);
         }
 
         private HttpResponse handleApi(HttpRequest req)

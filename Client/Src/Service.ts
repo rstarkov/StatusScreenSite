@@ -1,5 +1,5 @@
-import * as Util from 'Util'
-import { Api } from 'Api'
+import * as Util from './Util'
+import { Api } from './Api'
 
 export interface IService {
     readonly Name: string;

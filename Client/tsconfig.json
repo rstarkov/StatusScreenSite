@@ -1,13 +1,10 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "module": "system",
-        "sourceMap": true,
-        "outFile": "../Builds/Static/app.js",
         "noImplicitAny": true,
-        "noImplicitReturns": true
-    },
-    "files": [
-        "Src/App.ts"
-    ]
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true
+        //"noUnusedLocals": true,
+        //"allowUnreachableCode": true,
+    }
 }
