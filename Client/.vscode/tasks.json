@@ -4,23 +4,31 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "typescript",
-            "tsconfig": "tsconfig.json",
+            "taskName": "Build Everything",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "dependsOn": [
+                "(Build TypeScript)",
+                "(Build LESS)"
+            ]
         },
         {
-            "taskName": "CSS",
+            "taskName": "(Build TypeScript)",
+            "type": "shell",
+            "command": "tsc --project tsconfig.json",
+            "problemMatcher": [
+                "$tsc"
+            ]
+        },
+        {
+            "taskName": "(Build LESS)",
             "type": "shell",
             "command": "node_modules/.bin/lessc Css/app.less ../Builds/Static/app.css",
-            "windows": {
-                "command": "node_modules/.bin/lessc Css/app.less ../Builds/Static/app.css"
-            },
-            "group": {
-                "kind": "build"
-            }
+            "problemMatcher": [
+                "$lessCompile"
+            ]
         }
     ]
 }
