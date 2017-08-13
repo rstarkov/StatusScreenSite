@@ -2,6 +2,7 @@ const path = require('path');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const DynamicCdnWebpackPlugin = require('dynamic-cdn-webpack-plugin');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const LessPluginAutoPrefix = require('less-plugin-autoprefix');
 
 const extractLess = new ExtractTextPlugin({
   filename: "app.css"
@@ -32,7 +33,12 @@ module.exports = {
           use: [{
             loader: "css-loader"
           }, {
-            loader: 'less-loader'
+            loader: 'less-loader',
+            options: {
+              plugins: [
+                new LessPluginAutoPrefix({browsers: ["last 3 versions"]})
+              ]
+            }
           }]
         })
       }
