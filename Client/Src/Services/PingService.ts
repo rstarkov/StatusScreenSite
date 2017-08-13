@@ -3,11 +3,7 @@ import { IService } from '../Service'
 import * as _ from 'lodash';
 import * as d3 from 'd3';
 import 'plottable';
-
-interface PingDto {
-    Last: number | null;
-    Recent: (number | null)[];
-}
+import { IPingDto } from '../Dto'
 
 export class PingService implements IService {
     readonly Name: string = 'PingService';
@@ -43,7 +39,7 @@ export class PingService implements IService {
         });
     }
 
-    HandleUpdate(dto: PingDto) {
+    HandleUpdate(dto: IPingDto) {
         this.$Last.text(dto.Last == null ? '∞' : dto.Last.toString());
         let values = _(dto.Recent).map((v, i) => { return { x: 24 - dto.Recent.length + i, y: v }; });
         this._data.data(_.toArray(values));

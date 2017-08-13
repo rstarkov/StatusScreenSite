@@ -1,15 +1,6 @@
 import * as Util from '../Util'
 import { IService } from '../Service'
-
-interface WeatherDto {
-    CurTemperature: number;
-    MinTemperature: number;
-    MinTemperatureAtTime: string;
-    MinTemperatureAtDay: string;
-    MaxTemperature: number;
-    MaxTemperatureAtTime: string;
-    MaxTemperatureAtDay: string;
-}
+import { IWeatherDto } from '../Dto'
 
 export class WeatherService implements IService {
     readonly Name: string = 'WeatherService';
@@ -41,7 +32,7 @@ export class WeatherService implements IService {
         this.$MaxTempAtDay = $html.find('tr.max td.atDay');
     }
 
-    HandleUpdate(dto: WeatherDto) {
+    HandleUpdate(dto: IWeatherDto) {
         this.$CurTemp.text(this.niceTemp(dto.CurTemperature));
         this.$MinTemp.text(this.niceTemp(dto.MinTemperature));
         this.$MinTempAtTime.text(dto.MinTemperatureAtTime);

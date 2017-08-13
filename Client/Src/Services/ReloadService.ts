@@ -1,9 +1,6 @@
 import * as Util from '../Util'
 import { IService } from '../Service'
-
-interface ReloadDto {
-    StaticFilesHash: string;
-}
+import { IReloadDto } from '../Dto'
 
 export class ReloadService implements IService {
     readonly Name: string = 'ReloadService';
@@ -14,7 +11,7 @@ export class ReloadService implements IService {
     Start(): void {
     }
 
-    HandleUpdate(dto: ReloadDto) {
+    HandleUpdate(dto: IReloadDto) {
         if (this.LoadedHash == null) {
             this.LoadedHash = dto.StaticFilesHash;
             return;

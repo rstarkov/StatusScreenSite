@@ -61,7 +61,7 @@ namespace StatusScreenSite.Services
     class PingDto : ITypescriptDto
     {
         public DateTime ValidUntilUtc { get; set; }
-        public int? Last;
-        public int?[] Recent;
+        public int? Last { get; set; }
+        public int?[] Recent { get; set; }
     }
 }

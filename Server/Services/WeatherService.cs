@@ -89,10 +89,12 @@ namespace StatusScreenSite.Services
     class WeatherDto : ITypescriptDto
     {
         public DateTime ValidUntilUtc { get; set; }
-        public decimal CurTemperature;
-        public decimal MinTemperature;
-        public string MinTemperatureAtTime, MinTemperatureAtDay;
-        public decimal MaxTemperature;
-        public string MaxTemperatureAtTime, MaxTemperatureAtDay;
+        public decimal CurTemperature { get; set; }
+        public decimal MinTemperature { get; set; }
+        public string MinTemperatureAtTime { get; set; }
+        public string MinTemperatureAtDay { get; set; }
+        public decimal MaxTemperature { get; set; }
+        public string MaxTemperatureAtTime { get; set; }
+        public string MaxTemperatureAtDay { get; set; }
     }
 }

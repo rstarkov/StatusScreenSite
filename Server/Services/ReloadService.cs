@@ -13,7 +13,6 @@ namespace StatusScreenSite.Services
     {
         public override string ServiceName => "ReloadService";
         private string StaticPath => Settings;
-        //private AutoResetEvent ChangesNoticed = new AutoResetEvent(false);
 
         public ReloadService(Server server, string staticPath)
             : base(server, staticPath)
@@ -23,12 +22,7 @@ namespace StatusScreenSite.Services
         public override void Start()
         {
             new Thread(thread) { IsBackground = true }.Start();
-            //initWatcher();
         }
-
-        //private void initWatcher()
-        //{
-        //}
 
         private void thread()
         {
@@ -50,7 +44,6 @@ namespace StatusScreenSite.Services
                     SendUpdate(new ReloadDto { ValidUntilUtc = DateTime.UtcNow.AddYears(10), StaticFilesHash = hash });
 
                     // Sleep until we observe a change, but rescan fully every N minutes even we didn't see any changes
-                    //ChangesNoticed.WaitOne(TimeSpan.FromMinutes(20));
                     var minimumWait = DateTime.UtcNow.AddSeconds(2);
                     var watcher = new FileSystemWatcher();
                     watcher.IncludeSubdirectories = true;
