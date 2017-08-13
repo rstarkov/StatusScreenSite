@@ -7,8 +7,10 @@
     font-family: 'Open Sans';
 }
 
+html,
 body {
     background: black;
+    height: 100vh;
 }
 
 #DisconnectedOverlay {
@@ -36,11 +38,15 @@ body {
 }
 
 div#Container {
-    /*padding: 2vmin;*/
     display: flex;
-    flex-flow: row wrap;
+    width: 100vw;
+    height: 100vh;
+    /* flex-flow: row wrap;
     justify-content: space-between;
-    align-items: stretch;
+    align-items: stretch; */
+    flex-flow: column wrap;
+    justify-content: space-between;
+    align-items: center;
 }
 
 div.ServiceContainer {
