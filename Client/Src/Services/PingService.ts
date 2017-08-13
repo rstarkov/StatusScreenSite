@@ -27,7 +27,7 @@ export class PingService implements IService {
 
         this._data = new Plottable.Dataset();
         let xScale = new Plottable.Scales.Linear().domainMin(-1).domainMax(24);
-        let yScale = new Plottable.Scales.ModifiedLog(10).domainMin(0).domainMax(2000);
+        let yScale = new Plottable.Scales.ModifiedLog(10).domainMin(10).domainMax(2000);
         let colorScale = new Plottable.Scales.Color()
             .domain(["1", "2", "3", "4"])
             .range(['#08b025', '#1985f3', '#ff0000', '#ff00ff']);
