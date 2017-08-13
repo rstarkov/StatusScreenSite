@@ -10,9 +10,10 @@
                 "isDefault": true
             },
             "type": "shell",
-            "command": "node_modules/.bin/webpack -p --config webpack.config.js",
+            "command": "yarn run build",
             "problemMatcher": [
-                "$tsc"
+                "$tsc",
+                "$lessCompile"
             ]
         }
     ]

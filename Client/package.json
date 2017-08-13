@@ -4,6 +4,9 @@
     "description": "Dummy",
     "license": "UNLICENSED",
     "repository": "Dummy",
+    "scripts": {
+        "build": "yarn && webpack -p --config webpack.config.js"
+    },
     "dependencies": {
         "@types/jquery": "^3.2.11",
         "@types/lodash": "^4.14.72",
