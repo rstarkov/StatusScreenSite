@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using RT.Servers;
 using RT.TagSoup;
 using RT.Util;
+using RT.Util.ExtensionMethods;
 using StatusScreenSite.Services;
 
 namespace StatusScreenSite
@@ -132,6 +133,8 @@ namespace StatusScreenSite
         {
             var ws = new ApiWebSocket(this);
             _sockets.Add(ws);
+            Console.WriteLine($"API socket {ws.Id}: connected from {req.ClientIPAddress}");
+            Console.WriteLine($"   live sockets: {_sockets.Select(s => s.Id).Order().JoinString(", ")}");
             return HttpResponse.WebSocket(ws);
         }
 
@@ -154,16 +157,28 @@ namespace StatusScreenSite
         private void removeWebSocket(ApiWebSocket ws)
         {
             _sockets.Remove(ws);
+            Console.WriteLine($"API socket {ws.Id}: disconnected");
+            Console.WriteLine($"   live sockets: {_sockets.Select(s => s.Id).Order().JoinString(", ")}");
         }
 
 
         class ApiWebSocket : WebSocket
         {
+            static int _nextId = 1;
+            static object _lock = new object();
+
             private Server _server;
+
+            public int Id { get; private set; }
 
             public ApiWebSocket(Server server)
             {
                 _server = server;
+                lock (_lock)
+                {
+                    Id = _nextId;
+                    _nextId++;
+                }
             }
 
             protected override void onBeginConnection()
