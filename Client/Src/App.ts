@@ -5,6 +5,7 @@ import { WeatherService } from './Services/WeatherService'
 import { PingService } from './Services/PingService'
 import * as Util from './Util'
 import * as $ from 'jquery'
+import '../Css/app.less'
 
 export class App {
     private api: Api = new Api(this);

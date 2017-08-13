@@ -1,6 +1,11 @@
 const path = require('path');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const DynamicCdnWebpackPlugin = require('dynamic-cdn-webpack-plugin');
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+const extractLess = new ExtractTextPlugin({
+  filename: "app.css"
+});
 
 module.exports = {
 
@@ -12,7 +17,7 @@ module.exports = {
   },
 
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx']
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.less']
   },
 
   module: {
@@ -20,6 +25,16 @@ module.exports = {
       {
         test: /\.tsx?$/,
         loader: 'awesome-typescript-loader'
+      },
+      {
+        test: /\.less$/,
+        use: extractLess.extract({
+          use: [{
+            loader: "css-loader"
+          }, {
+            loader: 'less-loader'
+          }]
+        })
       }
     ]
   },
@@ -41,6 +56,7 @@ module.exports = {
         else
           return null;
       }
-    })
+    }),
+    extractLess
   ]
 };

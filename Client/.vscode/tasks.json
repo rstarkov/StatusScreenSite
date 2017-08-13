@@ -4,30 +4,15 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "Build Everything",
+            "taskName": "Build",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [
-                "(Build TypeScript)",
-                "(Build LESS)"
-            ]
-        },
-        {
-            "taskName": "(Build TypeScript)",
             "type": "shell",
             "command": "node_modules/.bin/webpack -p --config webpack.config.js",
             "problemMatcher": [
                 "$tsc"
-            ]
-        },
-        {
-            "taskName": "(Build LESS)",
-            "type": "shell",
-            "command": "node_modules/.bin/lessc Css/app.less ../Builds/Static/app.css",
-            "problemMatcher": [
-                "$lessCompile"
             ]
         }
     ]
