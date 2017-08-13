@@ -82,6 +82,25 @@ div#WeatherService {
             color: #ddd;
         }
     }
+    div.solar {
+        margin-top: 2vmin;
+        span.sunrise {
+            margin-left: -2vmin;
+            &::before {
+                content: "🔼";
+            }
+        }
+        span.sunset {
+            &::before {
+                content: "🔽";
+            }
+        }
+        span.sunsetDelta {
+            margin-left: 1.5vmin;
+            font-size: 80%;
+            color: #aaa;
+        }
+    }
 }
 
 div#ReloadService {

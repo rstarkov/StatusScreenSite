@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Innovative.SolarCalculator;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
@@ -56,6 +57,8 @@ namespace StatusScreenSite.Services
                     dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
                     dto.MaxTemperatureAtDay = max.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
+                    PopulateSunriseSunset(dto, DateTime.Today);
+
                     SaveSettings();
                     SendUpdate(dto);
                 }
@@ -65,6 +68,17 @@ namespace StatusScreenSite.Services
 
                 Thread.Sleep(TimeSpan.FromSeconds(60));
             }
+        }
+
+        private void PopulateSunriseSunset(WeatherDto dto, DateTime today)
+        {
+            var timesToday = new SolarTimes(DateTimeOffset.Now, Settings.Latitude, Settings.Longitude);
+            var timesTomorrow = new SolarTimes(DateTimeOffset.Now.AddDays(1), Settings.Latitude, Settings.Longitude);
+            dto.SunriseTime = $"{timesToday.Sunrise:HH:mm}";
+            dto.SolarNoonTime = $"{timesToday.SolarNoon:HH:mm}";
+            dto.SunsetTime = $"{timesToday.Sunset:HH:mm}";
+            var sunsetDelta = timesTomorrow.Sunset.AddDays(-1) - timesToday.Sunset;
+            dto.SunsetDeltaTime = (sunsetDelta >= TimeSpan.Zero ? "+" : "−") + $"{Math.Abs(sunsetDelta.TotalMinutes):0.0}m";
         }
 
         private (DateTime time, decimal temp) findExtreme(List<(DateTime time, decimal temp)> seq, int todayLimit, Func<IEnumerable<(DateTime time, decimal temp)>, (DateTime time, decimal temp)> getExtreme)
@@ -84,6 +98,8 @@ namespace StatusScreenSite.Services
     class WeatherSettings
     {
         public Dictionary<DateTime, decimal> Temperatures = new Dictionary<DateTime, decimal>();
+        public double Longitude = 0; // Longitude in degrees, east is positive
+        public double Latitude = 0; // Latitude in degrees, north is positive
     }
 
     class WeatherDto : ITypescriptDto
@@ -96,5 +112,9 @@ namespace StatusScreenSite.Services
         public decimal MaxTemperature { get; set; }
         public string MaxTemperatureAtTime { get; set; }
         public string MaxTemperatureAtDay { get; set; }
+        public string SunriseTime { get; set; }
+        public string SolarNoonTime { get; set; }
+        public string SunsetTime { get; set; }
+        public string SunsetDeltaTime { get; set; }
     }
 }

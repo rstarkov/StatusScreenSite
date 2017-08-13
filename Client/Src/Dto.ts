@@ -16,5 +16,9 @@ export interface IWeatherDto {
     MinTemperature: number;
     MinTemperatureAtDay: string | null;
     MinTemperatureAtTime: string | null;
+    SolarNoonTime: string | null;
+    SunriseTime: string | null;
+    SunsetDeltaTime: string | null;
+    SunsetTime: string | null;
     ValidUntilUtc: string;
 }
