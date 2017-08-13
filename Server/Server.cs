@@ -94,9 +94,9 @@ namespace StatusScreenSite
                 _manifestPath = PathUtil.AppPathCombine(_settings.StaticPath, "manifest.json");
             if (_manifestScripts == null || _manifestLastWrite != File.GetLastWriteTimeUtc(_manifestPath))
             {
-                IEnumerable<KeyValuePair<string, JToken>>  manifest = JObject.Parse(File.ReadAllText(_manifestPath));
+                IEnumerable<KeyValuePair<string, JToken>> manifest = JObject.Parse(File.ReadAllText(_manifestPath));
                 _manifestLastWrite = File.GetLastWriteTimeUtc(_manifestPath);
-                _manifestScripts = manifest.Where(tkn => tkn.Key != "main.js").Select(tkn => new SCRIPT { src = tkn.Value.Value<string>() }).ToList();
+                _manifestScripts = manifest.Where(tkn => tkn.Key != "main.js" && tkn.Key != "main.css").Select(tkn => new SCRIPT { src = tkn.Value.Value<string>() }).ToList();
             }
             return _manifestScripts;
         }
