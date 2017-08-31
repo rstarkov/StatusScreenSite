@@ -45,6 +45,7 @@ namespace StatusScreenSite
             _services.Add(new ReloadService(this, _settings.StaticPath));
             _services.Add(new WeatherService(this, _settings.WeatherSettings));
             _services.Add(new PingService(this, _settings.PingSettings));
+            _services.Add(new RouterService(this, _settings.RouterSettings));
 
             foreach (var svc in _services)
                 svc.Start();

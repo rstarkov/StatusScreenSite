@@ -8,6 +8,13 @@ export interface IReloadDto {
     StaticFilesHash: string | null;
     ValidUntilUtc: string;
 }
+export interface IRouterDto {
+    RxAverageRecent: number;
+    RxLast: number;
+    TxAverageRecent: number;
+    TxLast: number;
+    ValidUntilUtc: string;
+}
 export interface IWeatherDto {
     CurTemperature: number;
     MaxTemperature: number;

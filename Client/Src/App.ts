@@ -3,6 +3,7 @@ import { IService } from './Service'
 import { ReloadService } from './Services/ReloadService'
 import { WeatherService } from './Services/WeatherService'
 import { PingService } from './Services/PingService'
+import { RouterService } from './Services/RouterService'
 import * as Util from './Util'
 import * as $ from 'jquery'
 import '../Css/app.less'
@@ -21,6 +22,7 @@ export class App {
         this.services.push(new ReloadService());
         this.services.push(new WeatherService());
         this.services.push(new PingService());
+        this.services.push(new RouterService());
 
         for (let svc of this.services) {
             let $div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer').css('visibility', 'hidden');

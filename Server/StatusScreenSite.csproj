@@ -66,6 +66,7 @@
     <Compile Include="ServiceBase.cs" />
     <Compile Include="Services\ReloadService.cs" />
     <Compile Include="Services\PingService.cs" />
+    <Compile Include="Services\RouterService.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="TypescriptDto.cs" />
     <Compile Include="Services\WeatherService.cs" />
