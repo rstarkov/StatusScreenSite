@@ -27,6 +27,7 @@ export class App {
         for (let svc of this.services) {
             let $div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer').css('visibility', 'hidden');
             $container.append($div);
+            $div.append('<div class=JustUpdated>');
             svc.$Container = $div;
             svc.Start();
             this.api.RegisterService(svc);

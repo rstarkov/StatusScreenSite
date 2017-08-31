@@ -31,6 +31,7 @@ export class Api {
             if (svc) {
                 svc.HandleUpdate(msg.Data);
                 svc.$Container.css('visibility', 'visible');
+                svc.$Container.find('.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
             }
         };
     }
