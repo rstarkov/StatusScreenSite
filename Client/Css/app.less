@@ -38,24 +38,15 @@ body {
 }
 
 div#Container {
-    display: flex;
     width: 100vw;
     height: 100vh;
-    /* flex-flow: row wrap;
-    justify-content: space-between;
-    align-items: stretch; */
-    flex-flow: column wrap;
-    justify-content: space-between;
-    align-items: center;
 }
 
 div.ServiceContainer {
     padding: 3vmin;
-    padding-bottom: 2vmin;
     border: 1vmin solid #444;
-    /* #378 */
     background: #111;
-    position: relative;
+    position: absolute;
     .JustUpdated {
         background: yellow;
         width: 1vmin;
@@ -67,6 +58,8 @@ div.ServiceContainer {
 }
 
 div#WeatherService {
+    left: 0vw;
+    top: 0vh;
     div.cur {
         text-align: center;
         margin-bottom: 2vmin;
@@ -123,9 +116,11 @@ div#ReloadService {
 }
 
 div#PingService {
+    right: 0vw;
+    top: 0vh;
     div.pingPlot {
-        width: 50vmin;
-        height: 20vmin;
+        width: 45vw;
+        height: 30.7vmin;
     }
     div.pingNum {
         float: right;
@@ -133,6 +128,8 @@ div#PingService {
 }
 
 div#RouterService {
+    left: 0vw;
+    bottom: 3vh;
     width: 100vw;
     box-sizing: border-box;
     tr.headers td {
@@ -148,7 +145,7 @@ div#RouterService {
     }
     tr.plots>td>div {
         width: 35vw;
-        height: 10vmin;
+        height: 13vh;
     }
     tr.plots.tx>td.plot {
         border-bottom: 0.2vw solid #555;
@@ -159,6 +156,7 @@ div#RouterService {
     }
     td.spacer {
         font-size: 90%;
+        padding: 0 2vw;
     }
     td.kbs {
         color: #777;
