@@ -133,8 +133,40 @@ div#PingService {
 }
 
 div#RouterService {
+    width: 100vw;
+    box-sizing: border-box;
+    tr.headers td {
+        padding-bottom: 3vmin;
+        text-align: center;
+    }
     td {
-        text-align: right;
         padding: 0 1vmin;
+    }
+    td.traffic-last {
+        width: 7vw;
+        text-align: center;
+    }
+    tr.plots>td>div {
+        width: 35vw;
+        height: 10vmin;
+    }
+    tr.plots.tx>td.plot {
+        border-bottom: 0.2vw solid #555;
+        padding-bottom: 0.2vw;
+    }
+    tr.plots.tx>td>div {
+        transform: scaleY(-1);
+    }
+    td.spacer {
+        font-size: 90%;
+    }
+    td.kbs {
+        color: #777;
+    }
+    tr.tx td.spacer {
+        color: #1985f3;
+    }
+    tr.rx td.spacer {
+        color: #ED980D;
     }
 }

@@ -1,38 +1,100 @@
 import * as Util from '../Util'
 import { IService } from '../Service'
 import { IRouterDto } from '../Dto'
+import 'plottable';
+import * as d3 from 'd3';
+import * as _ from 'lodash';
 
 export class RouterService implements IService {
     readonly Name: string = 'RouterService';
     $Container: Util.Html;
 
-    private $RxLast: Util.Html;
-    private $TxLast: Util.Html;
-    private $RxAverage: Util.Html;
-    private $TxAverage: Util.Html;
+    private $AvgRecentTx: Util.Html;
+    private $AvgRecentRx: Util.Html;
+    private $AvgHourlyTx: Util.Html;
+    private $AvgHourlyRx: Util.Html;
+
+    private _recentTx: Plottable.Dataset;
+    private _recentRx: Plottable.Dataset;
+    private _hourlyTx: Plottable.Dataset;
+    private _hourlyRx: Plottable.Dataset;
 
     Start(): void {
         let $html = $(`
             <table>
-                <tr> <td>RX:</td> <td class=rxAvg></td> <td class=rxLast></td> </tr>
-                <tr> <td>TX:</td> <td class=txAvg></td> <td class=txLast></td> </tr>
+                <tr class=headers>
+                    <td class=kbs>KB/s</td>
+                    <td>Recent traffic</td>
+                    <td></td>
+                    <td>Hourly traffic</td>
+                    <td class=kbs>KB/s</td>
+                </tr>
+                <tr class="tx plots">
+                    <td class=traffic-last><span class=tx-recent></span></td>
+                    <td class=plot><div class=tx-recent></div></td>
+                    <td class=spacer>Up</td>
+                    <td class=plot><div class=tx-hourly></div></td>
+                    <td class=traffic-last><span class=tx-hourly></span></td>
+                </tr>
+                <tr class="rx plots">
+                    <td class=traffic-last><span class=rx-recent></span></td>
+                    <td class=plot><div class=rx-recent></div></td>
+                    <td class=spacer>Dn</td>
+                    <td class=plot><div class=rx-hourly></div></td>
+                    <td class=traffic-last><span class=rx-hourly></span></td>
+                </tr>
             </table>
         `);
         this.$Container.append($html);
-        this.$RxLast = $html.find('td.rxLast');
-        this.$TxLast = $html.find('td.txLast');
-        this.$RxAverage = $html.find('td.rxAvg');
-        this.$TxAverage = $html.find('td.txAvg');
+
+        this.$AvgRecentTx = $html.find('span.tx-recent');
+        this.$AvgRecentRx = $html.find('span.rx-recent');
+        this.$AvgHourlyTx = $html.find('span.tx-hourly');
+        this.$AvgHourlyRx = $html.find('span.rx-hourly');
+
+        this._recentTx = new Plottable.Dataset();
+        this._recentRx = new Plottable.Dataset();
+        this._hourlyTx = new Plottable.Dataset();
+        this._hourlyRx = new Plottable.Dataset();
+
+        this.createPlot(this._recentTx, this.$Container.find('div.tx-recent')[0], true);
+        this.createPlot(this._recentRx, this.$Container.find('div.rx-recent')[0], false);
+        this.createPlot(this._hourlyTx, this.$Container.find('div.tx-hourly')[0], true);
+        this.createPlot(this._hourlyRx, this.$Container.find('div.rx-hourly')[0], false);
+    }
+
+    private createPlot(dataset: Plottable.Dataset, el: HTMLElement, isTx: boolean): void {
+        let xScale = new Plottable.Scales.Linear().domainMin(-1).domainMax(24);
+        let yScale = new Plottable.Scales.ModifiedLog(10).domainMin(isTx ? 100 : 1000).domainMax(isTx ? 6100000 / 8 : 101000000 / 8);
+        let colorScale = new Plottable.Scales.Color()
+            .domain(["1", "2"])
+            .range([isTx ? '#1985f3' : '#ED980D', '#404040']);
+        let bars = new Plottable.Plots.Bar()
+            .addDataset(dataset)
+            .x(function (d) { return d.x; }, xScale)
+            .y(function (d) { return d.y == null ? yScale.domainMax() : d.y; }, yScale)
+            .attr('fill', function (d) { return d.y == null ? "2" : "1"; }, colorScale)
+            .renderTo(<any>d3.select(el));
+
+        window.addEventListener("resize", function () {
+            bars.redraw();
+        });
     }
 
     HandleUpdate(dto: IRouterDto) {
-        //this.$RxLast.text(this.niceRate(dto.RxLast));
-        //this.$TxLast.text(this.niceRate(dto.TxLast));
-        this.$RxAverage.text(this.niceRate(dto.RxAverageRecent));
-        this.$TxAverage.text(this.niceRate(dto.TxAverageRecent));
+        this.$AvgRecentTx.text(this.niceRate(dto.TxAverageRecent));
+        this.$AvgRecentRx.text(this.niceRate(dto.RxAverageRecent));
+        this.$AvgHourlyTx.text(this.niceRate(dto.HistoryHourly[23].TxRate));
+        this.$AvgHourlyRx.text(this.niceRate(dto.HistoryHourly[23].RxRate));
+
+        this._recentTx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v.TxRate }; })));
+        this._recentRx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v.RxRate }; })));
+
+        this._hourlyTx.data(_.toArray(_(dto.HistoryHourly).map((v, i) => { return { x: i, y: v == null ? null : v.TxRate }; })));
+        this._hourlyRx.data(_.toArray(_(dto.HistoryHourly).map((v, i) => { return { x: i, y: v == null ? null : v.RxRate }; })));
     }
 
     private niceRate(rate: number): string {
-        return Math.round(rate / 1024).toLocaleString(undefined, { minimumFractionDigits: 0 }) + " KB/s";
+        return Math.round(rate / 1024).toLocaleString(undefined, { minimumFractionDigits: 0 });
     }
 }

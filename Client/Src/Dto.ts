@@ -9,6 +9,8 @@ export interface IReloadDto {
     ValidUntilUtc: string;
 }
 export interface IRouterDto {
+    HistoryHourly: ({    RxRate: number;    TxRate: number;} | null)[] | null;
+    HistoryRecent: ({    RxRate: number;    TxRate: number;} | null)[] | null;
     RxAverageRecent: number;
     RxLast: number;
     TxAverageRecent: number;
