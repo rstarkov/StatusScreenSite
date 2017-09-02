@@ -1,3 +1,4 @@
+import '../Css/app.less' // required to let webpack know that it needs to build this file
 import { Api } from './Api'
 import { IService } from './Service'
 import { ReloadService } from './Services/ReloadService'
