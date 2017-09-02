@@ -24,7 +24,7 @@ export class WeatherService implements IService {
                 <tr class=min> <td class=temp></td> <td> at </td> <td class=atTime></td> <td class=atDay></td> </tr>
                 <tr class=max> <td class=temp></td> <td> at </td> <td class=atTime></td> <td class=atDay></td> </tr>
             </table>
-            <div class=solar><span class=sunrise>X</span> <span class=sunset></span> <span class=sunsetDelta></span></div>
+            <div class=solar>☀️<span class=sunrise>X</span> <span class=sunset></span> <span class=sunsetDelta></span></div>
         `);
         this.$Container.append($html);
         this.$CurTemp = $html.find('span.cur');
