@@ -1,5 +1,6 @@
 import { IService } from './Service'
 import { App } from './App'
+import * as moment from 'moment'
 
 export class Api {
     private app: App;
@@ -27,6 +28,7 @@ export class Api {
         this.socket.onmessage = (evt) => {
             this.app.ShowDisconnected(false);
             let msg: ApiMessage = JSON.parse(evt.data);
+            this.app.SetTimeOffset(moment.duration(moment.utc().diff(moment(msg.CurrentTimeUtc).utc(true))));
             var svc = this.services.get(msg.ServiceName);
             if (svc) {
                 svc.HandleUpdate(msg.Data);
