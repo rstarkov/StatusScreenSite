@@ -65,15 +65,17 @@ export class RouterService implements IService {
 
     private createPlot(dataset: Plottable.Dataset, el: HTMLElement, isTx: boolean): void {
         let xScale = new Plottable.Scales.Linear().domainMin(-1).domainMax(24);
-        let yScale = new Plottable.Scales.ModifiedLog(10).domainMin(isTx ? 100 : 1000).domainMax(isTx ? 6100000 / 8 : 101000000 / 8);
+        let yMax = isTx ? 6100000 / 8 : 101000000 / 8;
+        let yMin = yMax / 1000;
+        let yScale = new Plottable.Scales.Linear().domainMax(Math.log10(yMax) - Math.log10(yMin)).domainMin(0);
         let colorScale = new Plottable.Scales.Color()
-            .domain(["1", "2"])
-            .range([isTx ? '#1985f3' : '#ED980D', '#404040']);
+            .domain(["1", "2", "3", "4"])
+            .range([isTx ? '#05305c' : '#573805', isTx ? '#0959aa' : '#966008', isTx ? '#1985f3' : '#ED980D', isTx ? '#64adf7' : '#f6bb5a', '#404040']);
         let bars = new Plottable.Plots.Bar()
             .addDataset(dataset)
             .x(function (d) { return d.x; }, xScale)
-            .y(function (d) { return d.y == null ? yScale.domainMax() : d.y; }, yScale)
-            .attr('fill', function (d) { return d.y == null ? "2" : "1"; }, colorScale)
+            .y(function (d) { return Math.log10(d.y == null ? yMax : d.y) - Math.log10(yMin); }, yScale)
+            .attr('fill', function (d) { return d.y == null ? "5" : d.y < (yMax / 100) ? "1" : d.y < (yMax / 10) ? "2" : d.y < (yMax * 0.6) ? "3" : "4"; }, colorScale)
             .renderTo(<any>d3.select(el));
 
         window.addEventListener("resize", function () {
@@ -87,8 +89,8 @@ export class RouterService implements IService {
         this.$AvgHourlyTx.text(this.niceRate(dto.HistoryHourly[23].TxRate));
         this.$AvgHourlyRx.text(this.niceRate(dto.HistoryHourly[23].RxRate));
 
-        this._recentTx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v.TxRate }; })));
-        this._recentRx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v.RxRate }; })));
+        this._recentTx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v == null ? null : v.TxRate }; })));
+        this._recentRx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v == null ? null : v.RxRate }; })));
 
         this._hourlyTx.data(_.toArray(_(dto.HistoryHourly).map((v, i) => { return { x: i, y: v == null ? null : v.TxRate }; })));
         this._hourlyRx.data(_.toArray(_(dto.HistoryHourly).map((v, i) => { return { x: i, y: v == null ? null : v.RxRate }; })));
