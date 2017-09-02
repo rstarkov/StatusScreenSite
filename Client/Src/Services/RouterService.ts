@@ -86,8 +86,8 @@ export class RouterService implements IService {
     HandleUpdate(dto: IRouterDto) {
         this.$AvgRecentTx.text(this.niceRate(dto.TxAverageRecent));
         this.$AvgRecentRx.text(this.niceRate(dto.RxAverageRecent));
-        this.$AvgHourlyTx.text(this.niceRate(dto.HistoryHourly[23].TxRate));
-        this.$AvgHourlyRx.text(this.niceRate(dto.HistoryHourly[23].RxRate));
+        this.$AvgHourlyTx.text(dto.HistoryHourly[23] == null ? "?" : this.niceRate(dto.HistoryHourly[23].TxRate));
+        this.$AvgHourlyRx.text(dto.HistoryHourly[23] == null ? "?" : this.niceRate(dto.HistoryHourly[23].RxRate));
 
         this._recentTx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v == null ? null : v.TxRate }; })));
         this._recentRx.data(_.toArray(_(dto.HistoryRecent).map((v, i) => { return { x: 24 - dto.HistoryRecent.length + i, y: v == null ? null : v.RxRate }; })));
