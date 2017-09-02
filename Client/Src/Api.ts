@@ -17,10 +17,16 @@ export class Api {
     Start(): void {
         if (this.socket != null)
             throw new Error("Trying to Start when there's a non-null socket.");
+        console.log("API: connecting...");
         this.socket = new WebSocket(this.url);
+        this.socket.onopen = (evt) => {
+            console.log("API: connected.");
+        };
         this.socket.onerror = (evt) => {
+            console.log("API: socket error");
         };
         this.socket.onclose = (evt) => {
+            console.log("API: socket closed; reconnecting shortly");
             this.app.ShowDisconnected(true);
             this.socket = null;
             setTimeout(() => this.Start(), 2000);

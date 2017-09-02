@@ -17,6 +17,7 @@ export class ReloadService implements IService {
             return;
         }
         if (this.LoadedHash != dto.StaticFilesHash) {
+            console.log("ReloadService: hash has changed; reloading page...");
             location.reload(true);
         }
     }
