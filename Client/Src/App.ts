@@ -18,7 +18,7 @@ export class App {
         this.api.Start();
         let $body = $('body');
         $body.html('<div id=Container></div>');
-        let $container = $body.find('#Container');
+        let $container = Util.$get($body, '#Container');
 
         this.services.push(new ReloadService());
         this.services.push(new WeatherService());

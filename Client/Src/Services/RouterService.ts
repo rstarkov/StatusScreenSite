@@ -47,20 +47,20 @@ export class RouterService implements IService {
         `);
         this.$Container.append($html);
 
-        this.$AvgRecentTx = $html.find('span.tx-recent');
-        this.$AvgRecentRx = $html.find('span.rx-recent');
-        this.$AvgHourlyTx = $html.find('span.tx-hourly');
-        this.$AvgHourlyRx = $html.find('span.rx-hourly');
+        this.$AvgRecentTx = Util.$get($html, 'span.tx-recent');
+        this.$AvgRecentRx = Util.$get($html, 'span.rx-recent');
+        this.$AvgHourlyTx = Util.$get($html, 'span.tx-hourly');
+        this.$AvgHourlyRx = Util.$get($html, 'span.rx-hourly');
 
         this._recentTx = new Plottable.Dataset();
         this._recentRx = new Plottable.Dataset();
         this._hourlyTx = new Plottable.Dataset();
         this._hourlyRx = new Plottable.Dataset();
 
-        this.createPlot(this._recentTx, this.$Container.find('div.tx-recent')[0], true);
-        this.createPlot(this._recentRx, this.$Container.find('div.rx-recent')[0], false);
-        this.createPlot(this._hourlyTx, this.$Container.find('div.tx-hourly')[0], true);
-        this.createPlot(this._hourlyRx, this.$Container.find('div.rx-hourly')[0], false);
+        this.createPlot(this._recentTx, Util.get(this.$Container, 'div.tx-recent'), true);
+        this.createPlot(this._recentRx, Util.get(this.$Container, 'div.rx-recent'), false);
+        this.createPlot(this._hourlyTx, Util.get(this.$Container, 'div.tx-hourly'), true);
+        this.createPlot(this._hourlyRx, Util.get(this.$Container, 'div.rx-hourly'), false);
     }
 
     private createPlot(dataset: Plottable.Dataset, el: HTMLElement, isTx: boolean): void {

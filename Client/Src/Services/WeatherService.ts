@@ -27,17 +27,17 @@ export class WeatherService implements IService {
             <div class=solar>☀️<span class=sunrise>X</span> <span class=sunset></span> <span class=sunsetDelta></span></div>
         `);
         this.$Container.append($html);
-        this.$CurTemp = $html.find('span.cur');
-        this.$MinTemp = $html.find('tr.min td.temp');
-        this.$MinTempAtTime = $html.find('tr.min td.atTime');
-        this.$MinTempAtDay = $html.find('tr.min td.atDay');
-        this.$MaxTemp = $html.find('tr.max td.temp');
-        this.$MaxTempAtTime = $html.find('tr.max td.atTime');
-        this.$MaxTempAtDay = $html.find('tr.max td.atDay');
+        this.$CurTemp = Util.$get($html, 'span.cur');
+        this.$MinTemp = Util.$get($html, 'tr.min td.temp');
+        this.$MinTempAtTime = Util.$get($html, 'tr.min td.atTime');
+        this.$MinTempAtDay = Util.$get($html, 'tr.min td.atDay');
+        this.$MaxTemp = Util.$get($html, 'tr.max td.temp');
+        this.$MaxTempAtTime = Util.$get($html, 'tr.max td.atTime');
+        this.$MaxTempAtDay = Util.$get($html, 'tr.max td.atDay');
 
-        this.$Sunrise = $html.find('span.sunrise');
-        this.$Sunset = $html.find('span.sunset');
-        this.$SunsetDelta = $html.find('span.sunsetDelta');
+        this.$Sunrise = Util.$get($html, 'span.sunrise');
+        this.$Sunset = Util.$get($html, 'span.sunset');
+        this.$SunsetDelta = Util.$get($html, 'span.sunsetDelta');
     }
 
     HandleUpdate(dto: IWeatherDto) {

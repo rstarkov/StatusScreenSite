@@ -6,3 +6,7 @@ export function $get(obj: Html, content: any): Html {
         throw new Error(result.length + ' match(es) for: ' + content);
     return result;
 }
+
+export function get(obj: Html, content: any): HTMLElement {
+    return $get(obj, content)[0];
+}

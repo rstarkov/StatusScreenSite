@@ -1,5 +1,6 @@
 import { IService } from './Service'
 import { App } from './App'
+import * as Util from './Util'
 import * as moment from 'moment'
 
 export class Api {
@@ -40,7 +41,7 @@ export class Api {
             if (svc) {
                 svc.HandleUpdate(msg.Data);
                 svc.$Container.css('visibility', 'visible');
-                svc.$Container.find('.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
+                Util.$get(svc.$Container, '.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
             }
         };
     }
