@@ -31,8 +31,13 @@ export class App {
             $container.append($div);
             $div.append('<div class=JustUpdated>');
             svc.$Container = $div;
-            svc.Start();
-            this.api.RegisterService(svc);
+            try {
+                svc.Start(this.api);
+                this.api.RegisterService(svc);
+            }
+            catch (ex) {
+                console.warn("Failed to start service due to exception: " + svc.Name + ", " + ex);
+            }
         }
 
         this.$DisconnectedOverlay = $('<div id=DisconnectedOverlay><div></div></div>').css('visibility', 'hidden');
