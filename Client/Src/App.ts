@@ -17,7 +17,20 @@ export class App {
     Start(): void {
         this.api.Start();
         let $body = $('body');
-        $body.html('<div id=Container></div>');
+        $body.html(`
+        <div id=Container>
+            <table class=Container>
+                <tr>
+                    <td class="WeatherServiceContainer ServiceContainer"></td>
+                    <td class="TimeServiceContainer ServiceContainer"></td>
+                    <td class="PingServiceContainer ServiceContainer"></td>
+                </tr>
+                <tr>
+                    <td class="RouterServiceContainer ServiceContainer" colspan=3></td>
+                    <td class="ReloadServiceContainer ServiceContainer"></td>
+                </tr>
+            </table>
+        </div>`);
         let $container = Util.$get($body, '#Container');
 
         this.services.push(new ReloadService());
@@ -28,7 +41,7 @@ export class App {
 
         for (let svc of this.services) {
             let $div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer').css('visibility', 'hidden');
-            $container.append($div);
+            Util.$get($container, `.${svc.Name}Container`).append($div);
             $div.append('<div class=JustUpdated>');
             svc.$Container = $div;
             try {
