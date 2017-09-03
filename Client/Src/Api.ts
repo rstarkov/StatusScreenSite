@@ -7,6 +7,7 @@ export class Api {
     private socket: WebSocket | null;
     private url: string;
     private services: Map<string, IService> = new Map();
+    private timeOffset: moment.Duration = moment.duration(0);
 
     constructor(app: App) {
         this.app = app;
@@ -34,7 +35,7 @@ export class Api {
         this.socket.onmessage = (evt) => {
             this.app.ShowDisconnected(false);
             let msg: ApiMessage = JSON.parse(evt.data);
-            this.app.SetTimeOffset(moment.duration(moment.utc().diff(moment(msg.CurrentTimeUtc).utc(true))));
+            this.SetTimeOffset(moment.duration(moment(msg.CurrentTimeUtc).utc().diff(moment.utc())));
             var svc = this.services.get(msg.ServiceName);
             if (svc) {
                 svc.HandleUpdate(msg.Data);
@@ -46,6 +47,14 @@ export class Api {
 
     RegisterService(service: IService): void {
         this.services.set(service.Name, service);
+    }
+
+    SetTimeOffset(offset: moment.Duration): void {
+        this.timeOffset = offset;
+    }
+
+    GetTimeUtc(): moment.Moment {
+        return moment.utc().add(this.timeOffset);
     }
 }
 

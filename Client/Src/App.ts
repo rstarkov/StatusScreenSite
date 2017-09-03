@@ -3,17 +3,16 @@ import { Api } from './Api'
 import { IService } from './Service'
 import { ReloadService } from './Services/ReloadService'
 import { WeatherService } from './Services/WeatherService'
+import { TimeService } from './Services/TimeService'
 import { PingService } from './Services/PingService'
 import { RouterService } from './Services/RouterService'
 import * as Util from './Util'
 import * as $ from 'jquery'
-import * as moment from 'moment'
 
 export class App {
     private api: Api = new Api(this);
     private services: IService[] = [];
     private $DisconnectedOverlay: Util.Html
-    private timeOffset: moment.Duration = moment.duration(0);
 
     Start(): void {
         this.api.Start();
@@ -23,6 +22,7 @@ export class App {
 
         this.services.push(new ReloadService());
         this.services.push(new WeatherService());
+        this.services.push(new TimeService());
         this.services.push(new PingService());
         this.services.push(new RouterService());
 
@@ -41,14 +41,6 @@ export class App {
 
     ShowDisconnected(show: boolean): void {
         this.$DisconnectedOverlay.css('visibility', show ? 'visible' : 'hidden');
-    }
-
-    SetTimeOffset(offset: moment.Duration): void {
-        this.timeOffset = offset;
-    }
-
-    GetTimeUtc(): moment.Moment {
-        return moment.utc().add(this.timeOffset);
     }
 }
 

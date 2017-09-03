@@ -4,6 +4,6 @@ import { Api } from './Api'
 export interface IService {
     readonly Name: string;
     $Container: Util.Html;
-    Start(): void;
+    Start(api: Api): void;
     HandleUpdate(dto: any): void;
 }

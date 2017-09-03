@@ -17,6 +17,11 @@ export interface IRouterDto {
     TxLast: number;
     ValidUntilUtc: string;
 }
+export interface ITimeDto {
+    LocalOffsetHours: number;
+    TimeZones: ({    DisplayName: string | null;    OffsetHours: number;} | null)[] | null;
+    ValidUntilUtc: string;
+}
 export interface IWeatherDto {
     CurTemperature: number;
     MaxTemperature: number;
