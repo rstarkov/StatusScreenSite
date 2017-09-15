@@ -19,6 +19,7 @@ namespace StatusScreenSite
         private bool _isRunning = false;
         private HashSet<ApiWebSocket> _sockets = new HashSet<ApiWebSocket>();
         private HashSet<IService> _services = new HashSet<IService>();
+        private UrlResolver _resolver;
 
         public Server(Settings settings)
         {
@@ -33,13 +34,14 @@ namespace StatusScreenSite
 
             var server = new HttpServer(_settings.HttpOptions);
 
-            var resolver = new UrlResolver();
-            resolver.Add(new UrlHook(path: "/", specificPath: true), handleIndex);
-            resolver.Add(new UrlHook(path: "/app.html", specificPath: true), handleApp);
-            resolver.Add(new UrlHook(path: "/api", specificPath: true), handleApi);
-            resolver.Add(new UrlHook(path: null), handleStatic);
+            _resolver = new UrlResolver();
+            _resolver.Add(new UrlHook(path: "/", specificPath: true), handleIndex);
+            _resolver.Add(new UrlHook(path: "/app.html", specificPath: true), handleApp);
+            _resolver.Add(new UrlHook(path: "/api", specificPath: true), handleApi);
+            _resolver.Add(new UrlHook(path: null), handleStatic);
 
-            server.Handler = resolver.Handle;
+            server.Handler = serverHandler;
+            server.ErrorHandler = exceptionHandler;
             server.StartListening(blocking: false);
 
             _services.Add(new ReloadService(this, _settings.StaticPath));
@@ -50,6 +52,36 @@ namespace StatusScreenSite
 
             foreach (var svc in _services)
                 svc.Start();
+        }
+
+        private HttpResponse serverHandler(HttpRequest req)
+        {
+            HttpResponse resp = null;
+            HttpException excp = null;
+            var start = DateTime.UtcNow;
+            try
+            {
+                resp = _resolver.Handle(req);
+                return resp;
+            }
+            catch (HttpException e)
+            {
+                excp = e;
+                throw;
+            }
+            finally
+            {
+                Console.WriteLine($"{start.ToLocalTime()}: {req.Method} {req.Url} - {resp?.Status.ToString() ?? excp?.StatusCode.ToString() ?? "<exception>"} ({(DateTime.UtcNow - start).TotalMilliseconds:#,0} ms)");
+            }
+        }
+
+        private HttpResponse exceptionHandler(HttpRequest req, Exception excp)
+        {
+            if (excp is HttpException)
+                throw excp;
+            Console.WriteLine(excp.Message);
+            Console.WriteLine(excp.StackTrace);
+            throw new Exception("", excp);
         }
 
         public void SaveSettings()
