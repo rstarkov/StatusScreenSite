@@ -58,7 +58,10 @@ export class App {
     }
 
     ShowDisconnected(show: boolean): void {
-        this.$DisconnectedOverlay.css('visibility', show ? 'visible' : 'hidden');
+        if (show)
+            this.$DisconnectedOverlay.css('visibility', 'visible').stop(true, true).fadeTo(1, 0.01).fadeTo(3000, 0.1).fadeTo(5000, 0.99);
+        else
+            this.$DisconnectedOverlay.css('visibility', 'hidden');
     }
 }
 
