@@ -186,6 +186,10 @@
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-1.0.2.tgz#b02d10ab028e2928ac592a051aaa4981a1941d03"
 
+"@types/is-plain-object@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@types/is-plain-object/-/is-plain-object-0.0.2.tgz#25bca7b656ba23fb03799a060dba201a7952103d"
+
 "@types/jquery@^3.2.11":
   version "3.2.11"
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.2.11.tgz#9119f91bb103b16ae8c4375b019a9b341b409f50"
@@ -1930,7 +1934,7 @@ is-plain-obj@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/is-plain-obj/-/is-plain-obj-1.1.0.tgz#71a50c8429dfca773c92a390a4a03b39fcd51d3e"
 
-is-plain-object@^2.0.1:
+is-plain-object@^2.0.1, is-plain-object@^2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/is-plain-object/-/is-plain-object-2.0.4.tgz#2c163b3fafb1b606d9d17928f05c2a1c38e07677"
   dependencies:
@@ -2601,14 +2605,16 @@ pify@^2.0.0, pify@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/pify/-/pify-2.3.0.tgz#ed141a6ac043a849ea588498e7dca8b15330e90c"
 
-plottable@3.4.1:
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/plottable/-/plottable-3.4.1.tgz#d95932d5a778b0ad648fa1790d9dcf1e380e70c8"
+plottable@3.5.2:
+  version "3.5.2"
+  resolved "https://registry.yarnpkg.com/plottable/-/plottable-3.5.2.tgz#b8c2ef4940f05ec7a3fff4572d5c6ef01c7b288e"
   dependencies:
     "@types/d3" "^4.5.0"
+    "@types/is-plain-object" "^0.0.2"
     d3 "^4.5.0"
     d3-ease "^1.0.0"
     d3-shape "^1.0.0"
+    is-plain-object "^2.0.4"
     typesettable "^3.0.2"
 
 posix-character-classes@^0.1.0:
