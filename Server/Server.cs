@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace StatusScreenSite
         private Settings _settings;
         private bool _isRunning = false;
         private HashSet<ApiWebSocket> _sockets = new HashSet<ApiWebSocket>();
-        private HashSet<IService> _services = new HashSet<IService>();
+        private ConcurrentBag<IService> _services = new ConcurrentBag<IService>();
         private UrlResolver _resolver;
 
         public Server(Settings settings)
