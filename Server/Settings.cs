@@ -1,5 +1,11 @@
-﻿using RT.Servers;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using RT.Servers;
 using RT.Util;
+using RT.Util.ExtensionMethods;
+using RT.Util.Serialization;
 using StatusScreenSite.Services;
 
 namespace StatusScreenSite
@@ -14,5 +20,47 @@ namespace StatusScreenSite
         public TimeSettings TimeSettings = new TimeSettings();
         public PingSettings PingSettings = new PingSettings();
         public RouterSettings RouterSettings = new RouterSettings();
+    }
+
+    class DictionaryDateTimeDecimalSubstitutor : IClassifySubstitute<Dictionary<DateTime, decimal>, string>
+    {
+        public string ToSubstitute(Dictionary<DateTime, decimal> instance)
+        {
+            var sb = new StringBuilder();
+            foreach (var pt in instance)
+                sb.Append($"{pt.Key.ToBinary()},{pt.Value};");
+            return sb.ToString();
+        }
+
+        public Dictionary<DateTime, decimal> FromSubstitute(string instance)
+        {
+            return instance.Split(';').Where(str => str != "")
+                .Select(str =>
+                {
+                    var p = str.Split(',');
+                    return new KeyValuePair<DateTime, decimal>(DateTime.FromBinary(long.Parse(p[0])), decimal.Parse(p[1]));
+                }).ToDictionary();
+        }
+    }
+
+    class QueueRouterHistoryPointSubstitutor : IClassifySubstitute<Queue<RouterHistoryPoint>, string>
+    {
+        public string ToSubstitute(Queue<RouterHistoryPoint> instance)
+        {
+            var sb = new StringBuilder();
+            foreach (var pt in instance)
+                sb.Append($"{pt.Timestamp.ToBinary()},{pt.TxTotal},{pt.RxTotal};");
+            return sb.ToString();
+        }
+
+        public Queue<RouterHistoryPoint> FromSubstitute(string instance)
+        {
+            return new Queue<RouterHistoryPoint>(instance.Split(';').Where(str => str != "")
+                .Select(str =>
+                {
+                    var p = str.Split(',');
+                    return new RouterHistoryPoint { Timestamp = DateTime.FromBinary(long.Parse(p[0])), TxTotal = long.Parse(p[1]), RxTotal = long.Parse(p[2]) };
+                }));
+        }
     }
 }

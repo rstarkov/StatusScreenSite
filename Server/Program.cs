@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using RT.Util;
+using RT.Util.Serialization;
 
 namespace StatusScreenSite
 {
@@ -18,6 +19,9 @@ namespace StatusScreenSite
             }
             else if (args.Length != 0)
                 return 1;
+
+            Classify.DefaultOptions.AddTypeSubstitution(new QueueRouterHistoryPointSubstitutor());
+            Classify.DefaultOptions.AddTypeSubstitution(new DictionaryDateTimeDecimalSubstitutor());
 
             SettingsUtil.LoadSettings(out Settings);
             Server = new Server(Settings);
