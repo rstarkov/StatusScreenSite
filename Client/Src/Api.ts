@@ -1,5 +1,6 @@
 import { IService } from './Service'
 import { App } from './App'
+import { IServiceDto } from './Dto'
 import * as Util from './Util'
 import * as moment from 'moment'
 
@@ -38,12 +39,15 @@ export class Api {
             let msg: ApiMessage = JSON.parse(evt.data);
             this.SetTimeOffset(moment.duration(moment(msg.CurrentTimeUtc).utc().diff(moment.utc())));
             var svc = this.services.get(msg.ServiceName);
-            if (svc) {
-                svc.HandleUpdate(msg.Data);
-                svc.$Container.css('visibility', 'visible');
-                Util.$get(svc.$Container, '.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
-            }
+            if (svc)
+                this.ServiceUpdate(svc, msg.Data);
         };
+    }
+
+    private ServiceUpdate(svc: IService, dto: IServiceDto): void {
+        svc.HandleUpdate(dto);
+        svc.$Container.css('visibility', 'visible');
+        Util.$get(svc.$Container, '.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
     }
 
     RegisterService(service: IService): void {
@@ -62,5 +66,5 @@ export class Api {
 interface ApiMessage {
     ServiceName: string;
     CurrentTimeUtc: Date;
-    Data: any;
+    Data: IServiceDto;
 }
