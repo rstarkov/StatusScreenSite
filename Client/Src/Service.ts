@@ -2,9 +2,10 @@ import * as Util from './Util'
 import { Api } from './Api'
 import { IServiceDto } from './Dto'
 
-export interface IService {
-    readonly Name: string;
+export abstract class Service {
+    abstract readonly Name: string;
     $Container: Util.Html;
-    Start(api: Api): void;
-    HandleUpdate(dto: IServiceDto): void;
+
+    abstract Start(api: Api): void;
+    abstract HandleUpdate(dto: IServiceDto): void;
 }

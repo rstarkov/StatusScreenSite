@@ -1,13 +1,12 @@
 import * as Util from '../Util'
-import { IService } from '../Service'
+import { Service } from '../Service'
 import * as _ from 'lodash';
 import * as d3 from 'd3';
 import 'plottable';
 import { IPingDto } from '../Dto'
 
-export class PingService implements IService {
+export class PingService extends Service {
     readonly Name: string = 'PingService';
-    $Container: Util.Html;
 
     private $Last: Util.Html;
     private _data: Plottable.Dataset;

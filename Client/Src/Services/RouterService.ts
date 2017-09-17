@@ -1,13 +1,12 @@
 import * as Util from '../Util'
-import { IService } from '../Service'
+import { Service } from '../Service'
 import { IRouterDto } from '../Dto'
 import 'plottable';
 import * as d3 from 'd3';
 import * as _ from 'lodash';
 
-export class RouterService implements IService {
+export class RouterService extends Service {
     readonly Name: string = 'RouterService';
-    $Container: Util.Html;
 
     private $AvgRecentTx: Util.Html;
     private $AvgRecentRx: Util.Html;

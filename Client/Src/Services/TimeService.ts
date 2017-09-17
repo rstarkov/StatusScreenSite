@@ -1,12 +1,11 @@
 import * as Util from '../Util'
 import { Api } from '../Api'
-import { IService } from '../Service'
+import { Service } from '../Service'
 import { ITimeDto } from '../Dto'
 import * as moment from 'moment'
 
-export class TimeService implements IService {
+export class TimeService extends Service {
     readonly Name: string = 'TimeService';
-    $Container: Util.Html;
 
     private _api: Api;
     private $LocalTime: Util.Html;

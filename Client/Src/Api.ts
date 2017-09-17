@@ -1,4 +1,4 @@
-import { IService } from './Service'
+import { Service } from './Service'
 import { App } from './App'
 import { IServiceDto } from './Dto'
 import * as Util from './Util'
@@ -8,7 +8,7 @@ export class Api {
     private app: App;
     private socket: WebSocket | null;
     private url: string;
-    private services: Map<string, IService> = new Map();
+    private services: Map<string, Service> = new Map();
     private timeOffset: moment.Duration = moment.duration(0);
 
     constructor(app: App) {
@@ -44,13 +44,13 @@ export class Api {
         };
     }
 
-    private ServiceUpdate(svc: IService, dto: IServiceDto): void {
+    private ServiceUpdate(svc: Service, dto: IServiceDto): void {
         svc.HandleUpdate(dto);
         svc.$Container.css('visibility', 'visible');
         Util.$get(svc.$Container, '.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
     }
 
-    RegisterService(service: IService): void {
+    RegisterService(service: Service): void {
         this.services.set(service.Name, service);
     }
 

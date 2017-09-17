@@ -1,10 +1,9 @@
 import * as Util from '../Util'
-import { IService } from '../Service'
+import { Service } from '../Service'
 import { IWeatherDto } from '../Dto'
 
-export class WeatherService implements IService {
+export class WeatherService extends Service {
     readonly Name: string = 'WeatherService';
-    $Container: Util.Html;
 
     private $CurTemp: Util.Html;
     private $MinTemp: Util.Html;

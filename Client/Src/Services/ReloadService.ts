@@ -1,10 +1,9 @@
 import * as Util from '../Util'
-import { IService } from '../Service'
+import { Service } from '../Service'
 import { IReloadDto } from '../Dto'
 
-export class ReloadService implements IService {
+export class ReloadService extends Service {
     readonly Name: string = 'ReloadService';
-    $Container: Util.Html;
 
     private LoadedHash: string | null = null;
 

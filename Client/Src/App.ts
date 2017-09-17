@@ -1,6 +1,6 @@
 import '../Css/app.less' // required to let webpack know that it needs to build this file
 import { Api } from './Api'
-import { IService } from './Service'
+import { Service } from './Service'
 import { ReloadService } from './Services/ReloadService'
 import { WeatherService } from './Services/WeatherService'
 import { TimeService } from './Services/TimeService'
@@ -11,7 +11,7 @@ import * as $ from 'jquery'
 
 export class App {
     private api: Api = new Api(this);
-    private services: IService[] = [];
+    private services: Service[] = [];
     private $DisconnectedOverlay: Util.Html
 
     Start(): void {
