@@ -13,6 +13,8 @@ export class App {
     private api: Api = new Api(this);
     private services: Service[] = [];
     private $DisconnectedOverlay: Util.Html
+    private disconnectedTimerId: number;
+    private $container: Util.Html
 
     Start(): void {
         this.api.Start();
@@ -31,7 +33,7 @@ export class App {
                 </tr>
             </table>
         </div>`);
-        let $container = Util.$get($body, '#Container');
+        this.$container = Util.$get($body, '#Container');
 
         this.services.push(new ReloadService());
         this.services.push(new WeatherService());
@@ -41,7 +43,7 @@ export class App {
 
         for (let svc of this.services) {
             try {
-                svc.Initialise(this.api, $container);
+                svc.Initialise(this.api, this.$container);
                 this.api.RegisterService(svc);
             }
             catch (ex) {
@@ -54,6 +56,16 @@ export class App {
     }
 
     ShowDisconnected(show: boolean): void {
+        if (show) {
+            this.disconnectedTimerId = setTimeout(() => {
+                this.$container.addClass('Disconnected');
+            }, 5000);
+        } else {
+            if (this.disconnectedTimerId)
+                clearTimeout(this.disconnectedTimerId);
+            this.$container.removeClass('Disconnected');
+        }
+
         if (show && this.$DisconnectedOverlay.css('visibility') != 'visible')
             this.$DisconnectedOverlay.css('visibility', 'visible').stop(true, true).fadeTo(1, 0.01).fadeTo(3000, 0.1).fadeTo(5000, 0.99);
         else if (!show)

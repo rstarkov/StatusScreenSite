@@ -19,7 +19,7 @@ body {
 #DisconnectedOverlay {
     background: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.66), rgba(0, 0, 0, 0.66) 5vmin, rgba(136, 136, 0, 0.66) 5vmin, rgba(136, 136, 0, 0.66) 10vmin);
     background-attachment: fixed;
-    z-index: 999;
+    z-index: -999;
     position: absolute;
     top: 0;
     width: 100%;
@@ -43,6 +43,10 @@ body {
 div#Container {
     width: 100vw;
     height: 100vh;
+    &.Disconnected {
+        background: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.66), rgba(0, 0, 0, 0.66) 5vmin, rgba(136, 136, 0, 0.66) 5vmin, rgba(136, 136, 0, 0.66) 10vmin);
+        background-attachment: fixed;
+    }
 }
 
 table.Container {
@@ -79,6 +83,10 @@ div.ServiceContainer {
         position: absolute;
         top: 1vmin;
         left: 1vmin;
+    }
+    &.Invalid {
+        background: repeating-linear-gradient(45deg, #000, #000 5vmin, #a21 5vmin, #a21 10vmin);
+        background-attachment: fixed;
     }
 }
 

@@ -1,12 +1,14 @@
 import * as Util from './Util'
 import { Api } from './Api'
 import { IServiceDto } from './Dto'
+import * as moment from 'moment'
 
 export abstract class Service {
     abstract readonly Name: string;
     protected $Container: Util.Html;
     protected _api: Api;
     private _$justUpdated: Util.Html;
+    private _invalidateTimerId: number;
 
     protected abstract Start(): void;
     protected abstract HandleUpdate(dto: IServiceDto): void;
@@ -26,5 +28,16 @@ export abstract class Service {
         this.HandleUpdate(dto);
         this.$Container.css('visibility', 'visible');
         this._$justUpdated.stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
+        this.Invalidate(false);
+        if (this._invalidateTimerId)
+            clearTimeout(this._invalidateTimerId);
+        this._invalidateTimerId = setTimeout(() => this.Invalidate(true), moment.duration(moment(dto.ValidUntilUtc).diff(this._api.GetTimeUtc())).asMilliseconds());
+    }
+
+    private Invalidate(invalid: boolean): void {
+        if (invalid)
+            this.$Container.addClass('Invalid');
+        else
+            this.$Container.removeClass('Invalid');
     }
 }
