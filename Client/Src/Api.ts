@@ -40,14 +40,8 @@ export class Api {
             this.SetTimeOffset(moment.duration(moment(msg.CurrentTimeUtc).utc().diff(moment.utc())));
             var svc = this.services.get(msg.ServiceName);
             if (svc)
-                this.ServiceUpdate(svc, msg.Data);
+                svc.Update(msg.Data);
         };
-    }
-
-    private ServiceUpdate(svc: Service, dto: IServiceDto): void {
-        svc.HandleUpdate(dto);
-        svc.$Container.css('visibility', 'visible');
-        Util.$get(svc.$Container, '.JustUpdated').stop(true, true).fadeTo(1, 0.99).fadeTo(1000, 0.01);
     }
 
     RegisterService(service: Service): void {

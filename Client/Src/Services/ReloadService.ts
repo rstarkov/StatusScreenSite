@@ -7,10 +7,10 @@ export class ReloadService extends Service {
 
     private LoadedHash: string | null = null;
 
-    Start(): void {
+    protected Start(): void {
     }
 
-    HandleUpdate(dto: IReloadDto) {
+    protected HandleUpdate(dto: IReloadDto) {
         if (this.LoadedHash == null) {
             this.LoadedHash = dto.StaticFilesHash;
             return;

@@ -40,12 +40,8 @@ export class App {
         this.services.push(new RouterService());
 
         for (let svc of this.services) {
-            let $div = $('<div>').attr('id', svc.Name).addClass('ServiceContainer').css('visibility', 'hidden');
-            Util.$get($container, `.${svc.Name}Container`).append($div);
-            $div.append('<div class=JustUpdated>');
-            svc.$Container = $div;
             try {
-                svc.Start(this.api);
+                svc.Initialise(this.api, $container);
                 this.api.RegisterService(svc);
             }
             catch (ex) {

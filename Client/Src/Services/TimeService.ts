@@ -7,13 +7,11 @@ import * as moment from 'moment'
 export class TimeService extends Service {
     readonly Name: string = 'TimeService';
 
-    private _api: Api;
     private $LocalTime: Util.Html;
     private $Timezones: Util.Html;
     private _lastUpdate: ITimeDto;
 
-    Start(api: Api): void {
-        this._api = api;
+    protected Start(): void {
         let $html = $(`
             <div class=local><span class=local></span></div>
             <table class=timezones></ul>
@@ -25,7 +23,7 @@ export class TimeService extends Service {
         setInterval(() => this.updateDisplay(), 200);
     }
 
-    HandleUpdate(dto: ITimeDto) {
+    protected HandleUpdate(dto: ITimeDto) {
         this._lastUpdate = dto;
         this.updateDisplay();
     }

@@ -18,7 +18,7 @@ export class RouterService extends Service {
     private _hourlyTx: Plottable.Dataset;
     private _hourlyRx: Plottable.Dataset;
 
-    Start(): void {
+    protected Start(): void {
         let $html = $(`
             <table>
                 <tr class=headers>
@@ -82,7 +82,7 @@ export class RouterService extends Service {
         });
     }
 
-    HandleUpdate(dto: IRouterDto) {
+    protected HandleUpdate(dto: IRouterDto) {
         this.$AvgRecentTx.text(this.niceRate(dto.TxAverageRecent));
         this.$AvgRecentRx.text(this.niceRate(dto.RxAverageRecent));
         this.$AvgHourlyTx.text(dto.HistoryHourly[23] == null ? "?" : this.niceRate(dto.HistoryHourly[23].TxRate));

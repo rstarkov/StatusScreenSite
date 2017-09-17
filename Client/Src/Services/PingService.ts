@@ -11,7 +11,7 @@ export class PingService extends Service {
     private $Last: Util.Html;
     private _data: Plottable.Dataset;
 
-    Start(): void {
+    protected Start(): void {
         let $html = $(`
             <div class=pingNum><span></span> ms</div>
             <div class=header>Ping</div>
@@ -38,7 +38,7 @@ export class PingService extends Service {
         });
     }
 
-    HandleUpdate(dto: IPingDto) {
+    protected HandleUpdate(dto: IPingDto) {
         this.$Last.text(dto.Last == null ? '∞' : dto.Last.toString());
         let values = _(dto.Recent).map((v, i) => { return { x: 24 - dto.Recent.length + i, y: v }; });
         this._data.data(_.toArray(values));
