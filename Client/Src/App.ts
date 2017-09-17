@@ -12,7 +12,6 @@ import * as $ from 'jquery'
 export class App {
     private api: Api = new Api(this);
     private services: Service[] = [];
-    private $DisconnectedOverlay: Util.Html
     private disconnectedTimerId: number;
     private $container: Util.Html
 
@@ -50,9 +49,6 @@ export class App {
                 console.warn("Failed to start service due to exception: " + svc.Name + ", " + ex);
             }
         }
-
-        this.$DisconnectedOverlay = $('<div id=DisconnectedOverlay><div></div></div>').css('visibility', 'hidden');
-        $body.append(this.$DisconnectedOverlay);
     }
 
     ShowDisconnected(show: boolean): void {
@@ -65,11 +61,6 @@ export class App {
                 clearTimeout(this.disconnectedTimerId);
             this.$container.removeClass('Disconnected');
         }
-
-        if (show && this.$DisconnectedOverlay.css('visibility') != 'visible')
-            this.$DisconnectedOverlay.css('visibility', 'visible').stop(true, true).fadeTo(1, 0.01).fadeTo(3000, 0.1).fadeTo(5000, 0.99);
-        else if (!show)
-            this.$DisconnectedOverlay.css('visibility', 'hidden');
     }
 }
 
