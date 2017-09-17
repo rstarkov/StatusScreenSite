@@ -27,7 +27,7 @@ namespace StatusScreenSite.Services
                 try
                 {
                     var dto = new TimeDto();
-                    dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+                    dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromHours(24);
                     dto.LocalOffsetHours = getUtcOffset(Settings.LocalTimezoneName);
                     dto.TimeZones = Settings.ExtraTimezones.Select(tz => new TimeZoneDto { DisplayName = tz.DisplayName, OffsetHours = getUtcOffset(tz.TimezoneName) }).ToArray();
 

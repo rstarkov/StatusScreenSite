@@ -40,7 +40,7 @@ namespace StatusScreenSite.Services
                     Settings.Temperatures[DateTime.UtcNow] = curTemp;
 
                     var dto = new WeatherDto();
-                    dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(3);
+                    dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(30);
 
                     dto.CurTemperature = Settings.Temperatures.Where(kvp => kvp.Key >= DateTime.UtcNow.AddMinutes(-15)).Average(kvp => kvp.Value);
 
