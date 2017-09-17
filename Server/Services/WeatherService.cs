@@ -102,7 +102,7 @@ namespace StatusScreenSite.Services
         public double Latitude = 0; // Latitude in degrees, north is positive
     }
 
-    class WeatherDto : ITypescriptDto
+    class WeatherDto : IServiceDto
     {
         public DateTime ValidUntilUtc { get; set; }
         public decimal CurTemperature { get; set; }

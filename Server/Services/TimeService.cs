@@ -59,7 +59,7 @@ namespace StatusScreenSite.Services
         public string TimezoneName = null;
     }
 
-    class TimeDto : ITypescriptDto
+    class TimeDto : IServiceDto
     {
         public DateTime ValidUntilUtc { get; set; }
         public double LocalOffsetHours { get; set; }

@@ -173,13 +173,13 @@ namespace StatusScreenSite
             return HttpResponse.WebSocket(ws);
         }
 
-        public void SendUpdate(string serviceName, ITypescriptDto dto)
+        public void SendUpdate(string serviceName, IServiceDto dto)
         {
             foreach (var ws in _sockets)
                 sendUpdateToSocket(serviceName, dto, ws);
         }
 
-        private void sendUpdateToSocket(string serviceName, ITypescriptDto dto, ApiWebSocket ws)
+        private void sendUpdateToSocket(string serviceName, IServiceDto dto, ApiWebSocket ws)
         {
             try
             {

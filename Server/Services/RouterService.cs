@@ -163,7 +163,7 @@ namespace StatusScreenSite.Services
         public long RxTotal;
     }
 
-    class RouterDto : ITypescriptDto
+    class RouterDto : IServiceDto
     {
         public DateTime ValidUntilUtc { get; set; }
         public int RxLast { get; set; }

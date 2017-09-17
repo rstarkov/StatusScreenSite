@@ -58,7 +58,7 @@ namespace StatusScreenSite.Services
         public string Host = "8.8.8.8";
     }
 
-    class PingDto : ITypescriptDto
+    class PingDto : IServiceDto
     {
         public DateTime ValidUntilUtc { get; set; }
         public int? Last { get; set; }

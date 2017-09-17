@@ -61,7 +61,7 @@ namespace StatusScreenSite.Services
         }
     }
 
-    class ReloadDto : ITypescriptDto
+    class ReloadDto : IServiceDto
     {
         public DateTime ValidUntilUtc { get; set; }
         public string StaticFilesHash { get; set; }
