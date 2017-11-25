@@ -34,7 +34,7 @@ namespace StatusScreenSite.Services
                     var result = req.Get("https://www.cl.cam.ac.uk/research/dtg/weather/current-obs.txt").Expect(HttpStatusCode.OK).DataString;
                     var datetime = Regex.Match(result, @"at (?<time>\d+:\d\d (AM|PM)) on (?<date>\d+ \w\w\w \d\d):");
                     var dt = DateTime.ParseExact(datetime.Groups["date"].Value + "@" + datetime.Groups["time"].Value, "dd MMM yy'@'h:mm tt", null);
-                    var curTemp = decimal.Parse(Regex.Match(result, @"Temperature:\s+(?<temp>\d+(\.\d)?) C").Groups["temp"].Value);
+                    var curTemp = decimal.Parse(Regex.Match(result, @"Temperature:\s+(?<temp>-?\d+(\.\d)?) C").Groups["temp"].Value);
 
                     Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromHours(48));
                     Settings.Temperatures[DateTime.UtcNow] = curTemp;
