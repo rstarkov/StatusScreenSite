@@ -10,6 +10,7 @@ export class Api {
     private url: string;
     private services: Map<string, Service> = new Map();
     private timeOffset: moment.Duration = moment.duration(0);
+    private reconnectTimerId: number;
 
     constructor(app: App) {
         this.app = app;
@@ -18,9 +19,16 @@ export class Api {
     }
 
     Start(): void {
-        if (this.socket != null)
-            throw new Error("Trying to Start when there's a non-null socket.");
         console.log("API: connecting...");
+        if (this.socket != null) {
+            console.log("API: killing old socket...");
+            this.socket.onopen = () => { }
+            this.socket.onerror = () => { };
+            this.socket.onclose = () => { };
+            this.socket.onmessage = () => { };
+            this.socket.close();
+        }
+        this.resetReconnect(20000);
         this.socket = new WebSocket(this.url);
         this.socket.onopen = (evt) => {
             console.log("API: connected.");
@@ -32,16 +40,23 @@ export class Api {
             console.log("API: socket closed; reconnecting shortly");
             this.app.ShowDisconnected(true);
             this.socket = null;
-            setTimeout(() => this.Start(), 2000);
+            this.resetReconnect(2000);
         };
         this.socket.onmessage = (evt) => {
             this.app.ShowDisconnected(false);
+            this.resetReconnect(20000);
             let msg: ApiMessage = JSON.parse(evt.data);
             this.SetTimeOffset(moment.duration(moment(msg.CurrentTimeUtc).utc().diff(moment.utc())));
             var svc = this.services.get(msg.ServiceName);
             if (svc)
                 svc.Update(msg.Data);
         };
+    }
+
+    private resetReconnect(afterMs: number): void {
+        if (this.reconnectTimerId)
+            clearTimeout(this.reconnectTimerId);
+        this.reconnectTimerId = setTimeout(() => this.Start(), afterMs);
     }
 
     RegisterService(service: Service): void {
