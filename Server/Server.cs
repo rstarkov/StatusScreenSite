@@ -18,7 +18,7 @@ namespace StatusScreenSite
     {
         private Settings _settings;
         private bool _isRunning = false;
-        private HashSet<ApiWebSocket> _sockets = new HashSet<ApiWebSocket>();
+        private ConcurrentDictionary<ApiWebSocket, bool> _sockets = new ConcurrentDictionary<ApiWebSocket, bool>();
         private ConcurrentBag<IService> _services = new ConcurrentBag<IService>();
         private UrlResolver _resolver;
 
@@ -167,15 +167,15 @@ namespace StatusScreenSite
         private HttpResponse handleApi(HttpRequest req)
         {
             var ws = new ApiWebSocket(this);
-            _sockets.Add(ws);
+            _sockets.TryAdd(ws, true);
             Console.WriteLine($"API socket {ws.Id}: connected from {req.ClientIPAddress}");
-            Console.WriteLine($"   live sockets: {_sockets.Select(s => s.Id).Order().JoinString(", ")}");
+            Console.WriteLine($"   live sockets: {_sockets.Keys.Select(s => s.Id).Order().JoinString(", ")}");
             return HttpResponse.WebSocket(ws);
         }
 
         public void SendUpdate(string serviceName, IServiceDto dto)
         {
-            foreach (var ws in _sockets)
+            foreach (var ws in _sockets.Keys)
                 sendUpdateToSocket(serviceName, dto, ws);
         }
 
@@ -191,9 +191,9 @@ namespace StatusScreenSite
 
         private void removeWebSocket(ApiWebSocket ws)
         {
-            _sockets.Remove(ws);
+            _sockets.TryRemove(ws, out _);
             Console.WriteLine($"API socket {ws.Id}: disconnected");
-            Console.WriteLine($"   live sockets: {_sockets.Select(s => s.Id).Order().JoinString(", ")}");
+            Console.WriteLine($"   live sockets: {_sockets.Keys.Select(s => s.Id).Order().JoinString(", ")}");
         }
 
 
