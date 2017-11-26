@@ -40,11 +40,11 @@ export class WeatherService extends Service {
     }
 
     HandleUpdate(dto: IWeatherDto) {
-        this.$CurTemp.text(this.niceTemp(dto.CurTemperature));
-        this.$MinTemp.text(this.niceTemp(dto.MinTemperature));
+        this.$CurTemp.text(this.niceTemp(dto.CurTemperature)).css('color', dto.CurTemperatureColor);
+        this.$MinTemp.text(this.niceTemp(dto.MinTemperature)).css('color', dto.MinTemperatureColor);
         this.$MinTempAtTime.text(dto.MinTemperatureAtTime);
         this.$MinTempAtDay.text(dto.MinTemperatureAtDay);
-        this.$MaxTemp.text(this.niceTemp(dto.MaxTemperature));
+        this.$MaxTemp.text(this.niceTemp(dto.MaxTemperature)).css('color', dto.MaxTemperatureColor);
         this.$MaxTempAtTime.text(dto.MaxTemperatureAtTime);
         this.$MaxTempAtDay.text(dto.MaxTemperatureAtDay);
         this.$Sunrise.text(dto.SunriseTime);

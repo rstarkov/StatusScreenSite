@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Innovative.SolarCalculator;
 using RT.Util;
+using RT.Util.Drawing;
 using RT.Util.ExtensionMethods;
 
 namespace StatusScreenSite.Services
@@ -57,6 +59,10 @@ namespace StatusScreenSite.Services
                     dto.MaxTemperatureAtTime = $"{max.time.ToLocalTime():HH:mm}";
                     dto.MaxTemperatureAtDay = max.time.ToLocalTime().Date == DateTime.Today ? "today" : "yesterday";
 
+                    dto.CurTemperatureColor = getTemperatureDeviationColor(dto.CurTemperature, DateTime.Now, avg);
+                    dto.MinTemperatureColor = getTemperatureDeviationColor(min.temp, min.time.ToLocalTime(), avg);
+                    dto.MaxTemperatureColor = getTemperatureDeviationColor(max.temp, max.time.ToLocalTime(), avg);
+
                     PopulateSunriseSunset(dto, DateTime.Today);
 
                     SaveSettings();
@@ -93,6 +99,37 @@ namespace StatusScreenSite.Services
             else
                 return result;
         }
+
+        private static string getTemperatureDeviationColor(decimal temp, DateTime tempTime, List<(DateTime time, decimal temp)> avg)
+        {
+            var center = tempTime.ToLocalTime().AddDays(-1);
+            var prevTempsAtSameTime = avg.Take(0).ToList(); // empty list of same type
+            while (center.ToUniversalTime() > avg[0].time)
+            {
+                var from = center.AddHours(-0.5);
+                var to = center.AddHours(0.5);
+                var match = avg.Where(pt => pt.time >= from.ToUniversalTime() && pt.time <= to.ToUniversalTime()).MinElementOrDefault(pt => Math.Abs((pt.time - center.ToUniversalTime()).TotalSeconds));
+                if (match.time != default(DateTime))
+                    prevTempsAtSameTime.Add(match);
+                center = center.AddDays(-1);
+            }
+            var color = Color.FromArgb(0xDF, 0x72, 0xFF); // purple = can't color by deviation
+            if (prevTempsAtSameTime.Count >= 3)
+            {
+                var mean = (double) prevTempsAtSameTime.Average(pt => pt.temp);
+                var stdev = Math.Sqrt(prevTempsAtSameTime.Sum(pt => ((double) pt.temp - mean) * ((double) pt.temp - mean)) / (prevTempsAtSameTime.Count - 1));
+                var cur = (double) temp;
+                var coldest = Color.FromArgb(0x2F, 0x9E, 0xFF);
+                var warmest = Color.FromArgb(0xFF, 0x5D, 0x2F);
+                if (cur < mean - stdev)
+                    color = coldest;
+                else if (cur > mean + stdev)
+                    color = warmest;
+                else
+                    color = GraphicsUtil.ColorBlend(warmest, coldest, (cur - (mean - stdev)) / (2 * stdev));
+            }
+            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        }
     }
 
     class WeatherSettings
@@ -106,10 +143,13 @@ namespace StatusScreenSite.Services
     {
         public DateTime ValidUntilUtc { get; set; }
         public decimal CurTemperature { get; set; }
+        public string CurTemperatureColor { get; set; }
         public decimal MinTemperature { get; set; }
+        public string MinTemperatureColor { get; set; }
         public string MinTemperatureAtTime { get; set; }
         public string MinTemperatureAtDay { get; set; }
         public decimal MaxTemperature { get; set; }
+        public string MaxTemperatureColor { get; set; }
         public string MaxTemperatureAtTime { get; set; }
         public string MaxTemperatureAtDay { get; set; }
         public string SunriseTime { get; set; }

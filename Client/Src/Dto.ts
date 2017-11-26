@@ -27,12 +27,15 @@ export interface ITimeDto extends IServiceDto {
 }
 export interface IWeatherDto extends IServiceDto {
     CurTemperature: number;
+    CurTemperatureColor: string | null;
     MaxTemperature: number;
     MaxTemperatureAtDay: string | null;
     MaxTemperatureAtTime: string | null;
+    MaxTemperatureColor: string | null;
     MinTemperature: number;
     MinTemperatureAtDay: string | null;
     MinTemperatureAtTime: string | null;
+    MinTemperatureColor: string | null;
     SolarNoonTime: string | null;
     SunriseTime: string | null;
     SunsetDeltaTime: string | null;
