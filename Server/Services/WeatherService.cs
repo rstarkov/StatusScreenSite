@@ -36,7 +36,7 @@ namespace StatusScreenSite.Services
                     var dt = DateTime.ParseExact(datetime.Groups["date"].Value + "@" + datetime.Groups["time"].Value, "dd MMM yy'@'h:mm tt", null);
                     var curTemp = decimal.Parse(Regex.Match(result, @"Temperature:\s+(?<temp>-?\d+(\.\d)?) C").Groups["temp"].Value);
 
-                    Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromHours(48));
+                    Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromDays(8));
                     Settings.Temperatures[DateTime.UtcNow] = curTemp;
 
                     var dto = new WeatherDto();
