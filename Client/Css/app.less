@@ -29,6 +29,9 @@ table.Container {
     border-collapse: collapse;
     width: 100%;
     table-layout: fixed;
+    td {
+        box-sizing: border-box;
+    }
     td.ServiceContainer {
         border: none;
     }
@@ -36,7 +39,7 @@ table.Container {
         width: 55%;
     }
     td.TimeServiceContainer {
-        width: 25%;
+        width: 31%;
         padding: 0 4vmin;
     }
     td.PingServiceContainer {
