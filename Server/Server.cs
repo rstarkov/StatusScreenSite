@@ -97,7 +97,7 @@ namespace StatusScreenSite
                     new TITLE("Status Screen Site")
                 ),
                 new BODY { style = "margin:0; padding:0; overflow:hidden; background: #000;" }._(
-                    new IFRAME { src = "/app.html", style = "display: block; border: none; width: 100vw; height: 100vh;" }
+                    new IFRAME { src = "app.html", style = "display: block; border: none; width: 100vw; height: 100vh;" },
                 )
             );
             return HttpResponse.Html(html);
@@ -142,7 +142,7 @@ namespace StatusScreenSite
             var info = new FileInfo(PathUtil.AppPathCombine(_settings.StaticPath, path));
             if (!info.Exists)
                 throw new Exception($"Static file not found: {path}");
-            return $"/{path}?v={info.LastWriteTimeUtc.ToFileTimeUtc()}-{info.Length}";
+            return $"{path}?v={info.LastWriteTimeUtc.ToFileTimeUtc()}-{info.Length}";
         }
 
         private HttpResponse handleStatic(HttpRequest req)

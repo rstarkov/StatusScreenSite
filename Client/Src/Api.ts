@@ -15,7 +15,7 @@ export class Api {
     constructor(app: App) {
         this.app = app;
         let l = window.location;
-        this.url = (l.protocol === "https:" ? "wss://" : "ws://") + l.host + "/api";
+        this.url = (l.protocol === "https:" ? "wss://" : "ws://") + l.host + l.pathname.replace("/app.html", "") + "/api";
     }
 
     Start(): void {
