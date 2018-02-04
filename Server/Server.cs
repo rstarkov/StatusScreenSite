@@ -97,7 +97,8 @@ namespace StatusScreenSite
                     new TITLE("Status Screen Site")
                 ),
                 new BODY { style = "margin:0; padding:0; overflow:hidden; background: #000;" }._(
-                    new IFRAME { src = "app.html", style = "display: block; border: none; width: 100vw; height: 100vh;" },
+                    new IFRAME { id = "appframe", src = "app.html", style = "display: block; border: none; width: 100vw; height: 100vh;" },
+                    new DIV { style = "position: absolute; left: 0; bottom: 0; width: 25vw; height: 25vh;", onclick = "var af = document.getElementById('appframe'); (af.requestFullScreen || af.webkitRequestFullScreen || af.mozRequestFullScreen).call(af);" }
                 )
             );
             return HttpResponse.Html(html);
