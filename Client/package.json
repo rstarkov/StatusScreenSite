@@ -10,11 +10,10 @@
     "dependencies": {
         "@types/jquery": "^3.2.11",
         "@types/lodash": "^4.14.72",
-        "@types/plottable": "^1.4.32",
         "jquery": "3.2.1",
         "lodash": "^4.17.4",
         "moment": "^2.18.1",
-        "plottable": "3.5.2"
+        "plottable": "3.8.3"
     },
     "devDependencies": {
         "awesome-typescript-loader": "^3.2.2",

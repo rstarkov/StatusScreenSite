@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import * as _ from 'lodash';
-import 'plottable';
+import * as Plottable from 'plottable';
 import { IPingDto } from '../Dto';
 import { Service } from '../Service';
 import * as Util from '../Util';
