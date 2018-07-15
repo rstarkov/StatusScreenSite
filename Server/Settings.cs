@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using RT.Servers;
 using RT.Util;
+using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
 using RT.Util.Serialization;
 using StatusScreenSite.Services;
@@ -61,6 +62,27 @@ namespace StatusScreenSite
                 {
                     var p = str.Split(',');
                     return new RouterHistoryPoint { Timestamp = DateTime.FromBinary(long.Parse(p[0])), TxTotal = long.Parse(p[1]), RxTotal = long.Parse(p[2]) };
+                }));
+        }
+    }
+
+    class QueueHttpingPointSubstitutor : IClassifySubstitute<QueueViewable<HttpingPoint>, string>
+    {
+        public string ToSubstitute(QueueViewable<HttpingPoint> instance)
+        {
+            var sb = new StringBuilder();
+            foreach (var pt in instance)
+                sb.Append($"{pt.Timestamp},{pt.MsResponse};");
+            return sb.ToString();
+        }
+
+        public QueueViewable<HttpingPoint> FromSubstitute(string instance)
+        {
+            return new QueueViewable<HttpingPoint>(instance.Split(';').Where(str => str != "")
+                .Select(str =>
+                {
+                    var p = str.Split(',');
+                    return new HttpingPoint { Timestamp = uint.Parse(p[0]), MsResponse = ushort.Parse(p[1]) };
                 }));
         }
     }

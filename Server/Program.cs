@@ -22,6 +22,7 @@ namespace StatusScreenSite
 
             Classify.DefaultOptions.AddTypeSubstitution(new QueueRouterHistoryPointSubstitutor());
             Classify.DefaultOptions.AddTypeSubstitution(new DictionaryDateTimeDecimalSubstitutor());
+            Classify.DefaultOptions.AddTypeSubstitution(new QueueHttpingPointSubstitutor());
 
             SettingsUtil.LoadSettings(out Settings);
             Server = new Server(Settings);
