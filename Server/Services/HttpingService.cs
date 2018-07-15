@@ -68,6 +68,8 @@ namespace StatusScreenSite.Services
         [ClassifyIgnore]
         private TimeZoneInfo _timezone;
 
+        public override string ToString() => $"{Name} ({Url}) : {Recent.Count:#,0} recent, {Twominutely.Count:#,0} twomin, {Hourly.Count:#,0} hourly, {Daily.Count:#,0} daily, {Monthly.Count:#,0} monthly";
+
         public void Start()
         {
             _timezone = TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
@@ -84,17 +86,15 @@ namespace StatusScreenSite.Services
                     var hc = new HttpClient();
                     hc.Timeout = TimeSpan.FromSeconds(Interval.TotalSeconds * 0.90);
 
-                    double msWait = -1;
-                    double msDownload = -1;
+                    double msResponse = -1;
                     bool error = false;
                     bool ok = false;
                     var start = DateTime.UtcNow;
                     try
                     {
                         var response = hc.GetAsync(Url).GetAwaiter().GetResult();
-                        msWait = (DateTime.UtcNow - start).TotalMilliseconds;
                         var bytes = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
-                        msDownload = (DateTime.UtcNow - start).TotalMilliseconds - msWait;
+                        msResponse = (DateTime.UtcNow - start).TotalMilliseconds;
                         if (response.StatusCode == System.Net.HttpStatusCode.OK && Encoding.UTF8.GetString(bytes).Contains(MustContain))
                             ok = true;
                     }
@@ -105,10 +105,12 @@ namespace StatusScreenSite.Services
 
                     // Add this data point to Recent
                     var pt = new HttpingPoint { Timestamp = start.ToUnixSeconds() };
-                    if (!error && msWait >= 0)
-                        pt.MsWait = (ushort) ((int) msWait).Clip(1, 65535);
-                    if (!error && ok && msDownload >= 0)
-                        pt.MsDownload = (ushort) ((int) msDownload).Clip(1, 65535);
+                    if (error)
+                        pt.MsResponse = 65535; // timeout
+                    else if (!ok)
+                        pt.MsResponse = 0; // wrong code or didn't contain what we wanted
+                    else
+                        pt.MsResponse = (ushort) ((int) Math.Round(msResponse)).Clip(1, 65534);
                     Recent.Enqueue(pt);
                     // Maintain the last 35 days in order to calculate monthly percentiles precisely
                     var cutoff = DateTime.UtcNow.AddDays(-35).ToUnixSeconds();
@@ -171,8 +173,7 @@ namespace StatusScreenSite.Services
         {
             var startPrevTs = startPrevUtc.ToUnixSeconds();
             var startCurTs = startCurUtc.ToUnixSeconds();
-            var msWait = new List<ushort>();
-            var msDownload = new List<ushort>();
+            var msResponse = new List<ushort>();
             var interval = new HttpingPointInterval { StartUtc = startPrevUtc };
             for (int i = Recent.Count - 2 /* because the last point is known to be in the new interval */; i >= 0; i--)
             {
@@ -182,24 +183,20 @@ namespace StatusScreenSite.Services
                 if (pt.Timestamp >= startCurTs)
                     continue; // should never trigger but in case this method is called in other circumstances...
                 interval.TotalCount++;
-                if (pt.MsWait == 0 && pt.MsDownload == 0)
+                if (pt.MsResponse == 65535)
                     interval.TimeoutCount++;
-                else if (pt.MsDownload == 0)
+                else if (pt.MsResponse == 0)
                     interval.ErrorCount++;
                 else
                 {
-                    msWait.Add(pt.MsWait);
-                    msDownload.Add(pt.MsDownload);
+                    msResponse.Add(pt.MsResponse);
                 }
             }
-            Ut.Assert(msWait.Count == msDownload.Count);
-            Ut.Assert(interval.TotalCount == interval.TimeoutCount + interval.ErrorCount + msWait.Count);
-            if (msWait.Count > 0)
+            Ut.Assert(interval.TotalCount == interval.TimeoutCount + interval.ErrorCount + msResponse.Count);
+            if (msResponse.Count > 0)
             {
-                msWait.Sort();
-                msDownload.Sort();
-                SetPercentiles(ref interval.MsWait, msWait);
-                SetPercentiles(ref interval.MsDownload, msDownload);
+                msResponse.Sort();
+                SetPercentiles(ref interval.MsResponse, msResponse);
             }
             return interval;
         }
@@ -220,16 +217,12 @@ namespace StatusScreenSite.Services
         public DateTime ValidUntilUtc { get; set; }
     }
 
-    /// <summary>
-    ///     MsWait = 0 + MsDownload = 0 means timeout. If only MsDownload is 0 then it was a response we consider an error
-    ///     (wrong status code; expected text missing).</summary>
     struct HttpingPoint
     {
         public uint Timestamp; // seconds since 1970-01-01 00:00:00 UTC
-        public ushort MsWait;
-        public ushort MsDownload;
+        public ushort MsResponse; // 65535 = timeout; 0 = error (wrong status code or expected text missing)
 
-        public override string ToString() => $"{Timestamp.FromUnixSeconds()} : {MsWait}+{MsDownload}";
+        public override string ToString() => $"{Timestamp.FromUnixSeconds()} : {MsResponse:#,0} ms";
     }
 
     struct HttpingStatistic
@@ -247,12 +240,11 @@ namespace StatusScreenSite.Services
     struct HttpingPointInterval
     {
         public DateTime StartUtc; // UTC timestamp of the beginning of this interval
-        public HttpingStatistic MsWait; // timeouts and errors are not included
-        public HttpingStatistic MsDownload;
+        public HttpingStatistic MsResponse; // timeouts and errors are not included
         public int TotalCount;
         public int TimeoutCount;
         public int ErrorCount;
 
-        public override string ToString() => $"{StartUtc} : {TotalCount:#,0} samples, {TimeoutCount + ErrorCount:#,0} timeouts/errors, {MsWait}";
+        public override string ToString() => $"{StartUtc} : {TotalCount:#,0} samples, {TimeoutCount + ErrorCount:#,0} timeouts/errors, {MsResponse}";
     }
 }
