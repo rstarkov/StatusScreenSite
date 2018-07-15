@@ -86,4 +86,40 @@ namespace StatusScreenSite
                 }));
         }
     }
+
+    class QueueHttpingPointIntervalSubstitutor : IClassifySubstitute<QueueViewable<HttpingPointInterval>, string>
+    {
+        public string ToSubstitute(QueueViewable<HttpingPointInterval> instance)
+        {
+            var sb = new StringBuilder();
+            foreach (var pt in instance)
+                sb.Append($"{pt.StartUtc.ToBinary()},{pt.TotalCount},{pt.TimeoutCount},{pt.ErrorCount},{pt.MsResponse.Prc01},{pt.MsResponse.Prc25},{pt.MsResponse.Prc50},{pt.MsResponse.Prc75},{pt.MsResponse.Prc95},{pt.MsResponse.Prc99};");
+            return sb.ToString();
+        }
+
+        public QueueViewable<HttpingPointInterval> FromSubstitute(string instance)
+        {
+            return new QueueViewable<HttpingPointInterval>(instance.Split(';').Where(str => str != "")
+                .Select(str =>
+                {
+                    var p = str.Split(',');
+                    return new HttpingPointInterval
+                    {
+                        StartUtc = DateTime.FromBinary(long.Parse(p[0])),
+                        TotalCount = int.Parse(p[1]),
+                        TimeoutCount = int.Parse(p[2]),
+                        ErrorCount = int.Parse(p[3]),
+                        MsResponse = new HttpingStatistic
+                        {
+                            Prc01 = ushort.Parse(p[4]),
+                            Prc25 = ushort.Parse(p[5]),
+                            Prc50 = ushort.Parse(p[6]),
+                            Prc75 = ushort.Parse(p[7]),
+                            Prc95 = ushort.Parse(p[8]),
+                            Prc99 = ushort.Parse(p[9]),
+                        },
+                    };
+                }));
+        }
+    }
 }
