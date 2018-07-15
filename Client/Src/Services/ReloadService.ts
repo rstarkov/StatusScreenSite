@@ -1,6 +1,6 @@
-import * as Util from '../Util'
-import { Service } from '../Service'
-import { IReloadDto } from '../Dto'
+import { IReloadDto } from '../Dto';
+import { Service } from '../Service';
+import * as Util from '../Util';
 
 export class ReloadService extends Service {
     readonly Name: string = 'ReloadService';

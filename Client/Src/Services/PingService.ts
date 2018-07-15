@@ -1,9 +1,9 @@
-import * as Util from '../Util'
-import { Service } from '../Service'
-import * as _ from 'lodash';
 import * as d3 from 'd3';
+import * as _ from 'lodash';
 import 'plottable';
-import { IPingDto } from '../Dto'
+import { IPingDto } from '../Dto';
+import { Service } from '../Service';
+import * as Util from '../Util';
 
 export class PingService extends Service {
     readonly Name: string = 'PingService';

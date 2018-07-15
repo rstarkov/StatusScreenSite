@@ -1,9 +1,9 @@
-import * as Util from '../Util'
-import { Service } from '../Service'
-import { IRouterDto } from '../Dto'
-import 'plottable';
 import * as d3 from 'd3';
 import * as _ from 'lodash';
+import 'plottable';
+import { IRouterDto } from '../Dto';
+import { Service } from '../Service';
+import * as Util from '../Util';
 
 export class RouterService extends Service {
     readonly Name: string = 'RouterService';

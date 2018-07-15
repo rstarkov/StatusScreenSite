@@ -1,7 +1,7 @@
-import * as Util from './Util'
-import { Api } from './Api'
-import { IServiceDto } from './Dto'
-import * as moment from 'moment'
+import * as moment from 'moment';
+import { Api } from './Api';
+import { IServiceDto } from './Dto';
+import * as Util from './Util';
 
 export abstract class Service {
     abstract readonly Name: string;

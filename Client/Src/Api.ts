@@ -1,8 +1,8 @@
-import { Service } from './Service'
-import { App } from './App'
-import { IServiceDto } from './Dto'
-import * as Util from './Util'
-import * as moment from 'moment'
+import * as moment from 'moment';
+import { App } from './App';
+import { IServiceDto } from './Dto';
+import { Service } from './Service';
+import * as Util from './Util';
 
 export class Api {
     private app: App;

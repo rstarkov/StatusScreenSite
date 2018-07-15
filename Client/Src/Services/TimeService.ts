@@ -1,8 +1,8 @@
-import * as Util from '../Util'
-import { Api } from '../Api'
-import { Service } from '../Service'
-import { ITimeDto } from '../Dto'
-import * as moment from 'moment'
+import * as moment from 'moment';
+import { Api } from '../Api';
+import { ITimeDto } from '../Dto';
+import { Service } from '../Service';
+import * as Util from '../Util';
 
 export class TimeService extends Service {
     readonly Name: string = 'TimeService';

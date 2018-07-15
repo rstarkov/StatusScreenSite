@@ -1,6 +1,6 @@
-import * as Util from '../Util'
-import { Service } from '../Service'
-import { IWeatherDto } from '../Dto'
+import { IWeatherDto } from '../Dto';
+import { Service } from '../Service';
+import * as Util from '../Util';
 
 export class WeatherService extends Service {
     readonly Name: string = 'WeatherService';

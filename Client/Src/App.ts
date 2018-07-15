@@ -1,13 +1,14 @@
-import '../Css/app.less' // required to let webpack know that it needs to build this file
-import { Api } from './Api'
-import { Service } from './Service'
-import { ReloadService } from './Services/ReloadService'
-import { WeatherService } from './Services/WeatherService'
-import { TimeService } from './Services/TimeService'
-import { PingService } from './Services/PingService'
-import { RouterService } from './Services/RouterService'
-import * as Util from './Util'
-import * as $ from 'jquery'
+import * as $ from 'jquery';
+import '../Css/app.less';
+import { Api } from './Api';
+import { Service } from './Service';
+import { PingService } from './Services/PingService';
+import { ReloadService } from './Services/ReloadService';
+import { RouterService } from './Services/RouterService';
+import { TimeService } from './Services/TimeService';
+import { WeatherService } from './Services/WeatherService';
+import * as Util from './Util';
+// required to let webpack know that it needs to build this file
 
 export class App {
     private api: Api = new Api(this);
