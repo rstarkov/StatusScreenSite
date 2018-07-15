@@ -2,6 +2,9 @@
 export interface IServiceDto {
     ValidUntilUtc: string;
 }
+export interface IHttpingDto extends IServiceDto {
+    ValidUntilUtc: string;
+}
 export interface IPingDto extends IServiceDto {
     Last: number | null;
     Recent: (number | null)[] | null;

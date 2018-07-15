@@ -49,6 +49,7 @@ namespace StatusScreenSite
             _services.Add(new WeatherService(this, _settings.WeatherSettings));
             _services.Add(new TimeService(this, _settings.TimeSettings));
             _services.Add(new PingService(this, _settings.PingSettings));
+            _services.Add(new HttpingService(this, _settings.HttpingSettings));
             _services.Add(new RouterService(this, _settings.RouterSettings));
 
             foreach (var svc in _services)

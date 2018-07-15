@@ -19,6 +19,7 @@ namespace StatusScreenSite
         public WeatherSettings WeatherSettings = new WeatherSettings();
         public TimeSettings TimeSettings = new TimeSettings();
         public PingSettings PingSettings = new PingSettings();
+        public HttpingSettings HttpingSettings = new HttpingSettings();
         public RouterSettings RouterSettings = new RouterSettings();
     }
 
