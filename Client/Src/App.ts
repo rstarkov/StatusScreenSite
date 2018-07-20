@@ -2,26 +2,27 @@ import * as $ from 'jquery';
 import '../Css/app.less';
 import { Api } from './Api';
 import { Service } from './Service';
+import { HttpingService } from './Services/HttpingService';
 import { PingService } from './Services/PingService';
 import { ReloadService } from './Services/ReloadService';
 import { RouterService } from './Services/RouterService';
 import { TimeService } from './Services/TimeService';
 import { WeatherService } from './Services/WeatherService';
 import * as Util from './Util';
-// required to let webpack know that it needs to build this file
 
 export class App {
     private api: Api = new Api(this);
     private services: Service[] = [];
     private disconnectedTimerId: number;
-    private $container: Util.Html
+    private $container: Util.Html;
+    private $pages: Map<string, Util.Html> = new Map();
 
     Start(): void {
         this.api.Start();
         let $body = $('body');
         $body.html(`
         <div id=Container>
-            <table class=Container>
+            <table class="Container Page1">
                 <tr>
                     <td class="WeatherServiceContainer ServiceContainer"></td>
                     <td class="TimeServiceContainer ServiceContainer"></td>
@@ -32,6 +33,11 @@ export class App {
                     <td class="ReloadServiceContainer ServiceContainer"></td>
                 </tr>
             </table>
+            <table class="Container Page2">
+                <tr>
+                    <td class="HttpingServiceContainer ServiceContainer" colspan=3></td>
+                </tr>
+            </table>
         </div>`);
         this.$container = Util.$get($body, '#Container');
 
@@ -39,7 +45,19 @@ export class App {
         this.services.push(new WeatherService());
         this.services.push(new TimeService());
         this.services.push(new PingService());
+        this.services.push(new HttpingService());
         this.services.push(new RouterService());
+
+        this.$pages.set('1', Util.$get($body, '.Container.Page1'));
+        this.$pages.set('2', Util.$get($body, '.Container.Page2'));
+        this.SwitchToPage('1');
+
+        $body.on('keypress', (x) => {
+            if (x.altKey || x.ctrlKey || x.shiftKey)
+                return;
+            if (this.$pages.has(x.key))
+                this.SwitchToPage(x.key);
+        });
 
         for (let svc of this.services) {
             try {
@@ -63,6 +81,12 @@ export class App {
             this.$container.removeClass('Disconnected');
         }
     }
+
+    SwitchToPage = (page: string): void => {
+        for (let pg of this.$pages.values())
+            pg.hide();
+        this.$pages.get(page).show();
+    };
 }
 
 (function (): void {

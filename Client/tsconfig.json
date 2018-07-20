@@ -4,6 +4,7 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
+        "downlevelIteration": true,
         //"noUnusedLocals": true,
         //"allowUnreachableCode": true,
         "lib": [

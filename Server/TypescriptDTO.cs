@@ -58,7 +58,7 @@ namespace StatusScreenSite
             }
             if (propType == typeof(string))
                 file.Append("string");
-            else if (propType == typeof(int) || propType == typeof(double) || propType == typeof(decimal))
+            else if (propType == typeof(int) || propType == typeof(double) || propType == typeof(decimal) || propType == typeof(ushort))
                 file.Append("number");
             else if (propType == typeof(DateTime))
                 file.Append("string");
