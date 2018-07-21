@@ -95,9 +95,9 @@ namespace StatusScreenSite.Services
                             {
                                 Name = tgt.Name,
                                 Twominutely = GetIntervalDto(tgt.Twominutely, TimeSpan.FromMinutes(2), tgt.GetStartOfTwominute),
-                                Hourly = GetIntervalDto(tgt.Hourly, TimeSpan.FromMinutes(2), tgt.GetStartOfHour),
-                                Daily = GetIntervalDto(tgt.Daily, TimeSpan.FromMinutes(2), tgt.GetStartOfLocalDayInUtc),
-                                Monthly = GetIntervalDto(tgt.Monthly, TimeSpan.FromMinutes(2), tgt.GetStartOfLocalMonthInUtc),
+                                Hourly = GetIntervalDto(tgt.Hourly, TimeSpan.FromHours(1), tgt.GetStartOfHour),
+                                Daily = GetIntervalDto(tgt.Daily, TimeSpan.FromHours(24), tgt.GetStartOfLocalDayInUtc),
+                                Monthly = GetIntervalDto(tgt.Monthly, TimeSpan.FromDays(30), tgt.GetStartOfLocalMonthInUtc),
                                 Last30m = last30m,
                                 Last24h = last24h,
                                 Last30d = last30d,
