@@ -153,17 +153,31 @@ div#PingService {
     }
 }
 
-div#HttpingService {
-    table.HttpingSummary {
-        th {
-            padding-bottom: 2vmin;
-        }
-        td {
-            padding: 0.5vmin 5vmin;
-            text-align: center;
-        }
-        td:first-child {
-            text-align: left;
+.Container.Page2 {
+    * {
+        font-size: 14px;
+    }
+    div#HttpingService {
+        table.HttpingSummary {
+            th {
+                padding-bottom: 8px;
+            }
+            td {
+                padding: 4px 14px;
+                text-align: center;
+                vertical-align: bottom;
+            }
+            td:first-child {
+                text-align: left;
+            }
+            td.plot {
+                text-align: left;
+                div.plot {
+                    width: 170px;
+                    height: 28px;
+                    display: inline-block;
+                }
+            }
         }
     }
 }

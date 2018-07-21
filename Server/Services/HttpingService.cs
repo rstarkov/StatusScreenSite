@@ -102,7 +102,7 @@ namespace StatusScreenSite.Services
                                 Last24h = last24h,
                                 Last30d = last30d,
                             };
-                            //tgtdto.Recent = ???;
+                            tgtdto.Recent = tgt.Recent.Select(pt => (int) pt.MsResponse).Skip(tgt.Recent.Count - 30).ToArray();
 
                             dto.Targets[i] = tgtdto;
                         }

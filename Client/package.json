@@ -5,7 +5,8 @@
     "license": "UNLICENSED",
     "repository": "Dummy",
     "scripts": {
-        "build": "yarn && webpack -p --config webpack.config.js"
+        "build": "yarn && webpack --config webpack.config.js",
+        "build-prod": "yarn && webpack -p --config webpack.config.js"
     },
     "dependencies": {
         "@types/jquery": "^3.2.11",
