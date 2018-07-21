@@ -111,13 +111,31 @@ class Entry {
             this.initialisePlots(dto);
 
         this.$tdName.text(dto.Name);
-        this.$td30m50.html(`${dto.Last30m.MsResponsePrc50}`);
-        this.$td30m95.html(`${dto.Last30m.MsResponsePrc95}`);
-        this.$td24h50.html(`${dto.Last24h.MsResponsePrc50}`);
-        this.$td24h95.html(`${dto.Last24h.MsResponsePrc95}`);
-        this.$td30d50.html(`${dto.Last30d.MsResponsePrc50}`);
-        this.$td30d95.html(`${dto.Last30d.MsResponsePrc95}`);
-        this.$td30dErr.html(`${((dto.Last30d.ErrorCount + dto.Last30d.TimeoutCount) * 100 / dto.Last30d.TotalCount).toFixed(2)}%`);
+
+        let set50prc = (tgt: Util.Html, time: number) => {
+            tgt.html(`${time}`).css('color',
+                time <= dto.Last30d.MsResponsePrc75 ? "#08b025"
+                    : time >= dto.Last30d.MsResponsePrc75 * 1.5 ? "#ff0000"
+                        : '#1985f3');
+        }
+        let set95prc = (tgt: Util.Html, time50prc: number, time95prc: number) => {
+            tgt.html(`${time95prc}`).css('color',
+                time95prc < time50prc * 1.1 ? "#08b025"
+                    : time95prc < time50prc * 1.3 ? "#4ef459"
+                        : time95prc > time50prc * 1.8 ? "#ff0000"
+                            : '#1985f3');
+        }
+        set50prc(this.$td30m50, dto.Last30m.MsResponsePrc50);
+        set95prc(this.$td30m95, dto.Last30m.MsResponsePrc50, dto.Last30m.MsResponsePrc95);
+        set50prc(this.$td24h50, dto.Last24h.MsResponsePrc50);
+        set95prc(this.$td24h95, dto.Last24h.MsResponsePrc50, dto.Last24h.MsResponsePrc95);
+        this.$td30d50.html(`${dto.Last30d.MsResponsePrc50}`).css('color',
+            dto.Last30d.MsResponsePrc50 < 100 ? '#08b025'
+                : dto.Last30d.MsResponsePrc50 > 400 ? '#ff0000'
+                    : '#1985f3');
+        set95prc(this.$td30d95, dto.Last30d.MsResponsePrc50, dto.Last30d.MsResponsePrc95);
+        let downtime30d = (dto.Last30d.ErrorCount + dto.Last30d.TimeoutCount) * 100 / dto.Last30d.TotalCount;
+        this.$td30dErr.html(`${downtime30d.toFixed(2)}%`).css('color', downtime30d < 0.05 ? '#08b025' : downtime30d > 0.5 ? '#ff0000' : '#1985f3');
 
         this._dataRecent.data(_.toArray(_(dto.Recent).map((v, i) => { return { x: i, y: v }; })));
         if (this._data2min) {

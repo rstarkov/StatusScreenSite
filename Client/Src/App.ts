@@ -35,7 +35,7 @@ export class App {
             </table>
             <table class="Container Page2">
                 <tr>
-                    <td class="HttpingServiceContainer ServiceContainer" colspan=3></td>
+                    <td class="HttpingServiceContainer ServiceContainer"></td>
                 </tr>
             </table>
         </div>`);
