@@ -95,24 +95,34 @@ class Entry {
     private _dataDaily: Datasets;
 
     public Add($tbody: Util.Html): void {
-        this.$row = $('<tr>');
-        this.$tdName = $('<td>');
-        this.$td30m50 = $('<td class=groupright></td>');
-        this.$td30m95 = $('<td class="groupleft borderright"></td>');
-        this.$td24h50 = $('<td class=groupright></td>');
-        this.$td24h95 = $('<td class="groupleft borderright"></td>');
-        this.$td30d50 = $('<td class=groupright></td>');
-        this.$td30d95 = $('<td class="groupleft groupright"></td>');
-        this.$td30dErr = $('<td class=groupleft></td>');
-        this.$tdChartRecent = $('<td class="plot recent"><div class="plot recent"></div></td>');
-        this.$tdChart2min = $('<td class="plot 2min"><div class="plot 2min"></div></td>');
-        this.$tdChartDaily = $('<td class="plot daily"><div class="plot daily"></div></td>');
-        this.$row.append(this.$tdName)
-            .append(this.$td30m50).append(this.$td30m95)
-            .append(this.$td24h50).append(this.$td24h95)
-            .append(this.$td30d50).append(this.$td30d95).append(this.$td30dErr)
-            .append(this.$tdChartRecent).append(this.$tdChart2min).append(this.$tdChartDaily);
+        this.$row = $(`
+            <tr>
+                <td id=hpName></td>
+                <td id=hp30m50 class=groupright></td>
+                <td id=hp30m95 class="groupleft borderright"></td>
+                <td id=hp24h50 class=groupright></td>
+                <td id=hp24h95 class="groupleft borderright"></td>
+                <td id=hp30d50 class=groupright></td>
+                <td id=hp30d95 class="groupleft groupright"></td>
+                <td id=hp30dErr class=groupleft></td>
+                <td id=hpChartRecent class="plot recent"><div class="plot recent"></div></td>
+                <td id=hpChart2min class="plot 2min"><div class="plot 2min"></div></td>
+                <td id=hpChartDaily class="plot daily"><div class="plot daily"></div></td>
+            </tr>
+        `);
         $tbody.append(this.$row);
+        this.$tdName = Util.$get(this.$row, 'td#hpName');
+        this.$td30m50 = Util.$get(this.$row, 'td#hp30m50');
+        this.$td30m95 = Util.$get(this.$row, 'td#hp30m95');
+        this.$td24h50 = Util.$get(this.$row, 'td#hp24h50');
+        this.$td24h95 = Util.$get(this.$row, 'td#hp24h95');
+        this.$td30d50 = Util.$get(this.$row, 'td#hp30d50');
+        this.$td30d95 = Util.$get(this.$row, 'td#hp30d95');
+        this.$td30dErr = Util.$get(this.$row, 'td#hp30dErr');
+        this.$tdChartRecent = Util.$get(this.$row, 'td#hpChartRecent');
+        this.$tdChart2min = Util.$get(this.$row, 'td#hpChart2min');
+        this.$tdChartDaily = Util.$get(this.$row, 'td#hpChartDaily');
+
         this._dataRecent = null;
     }
 
