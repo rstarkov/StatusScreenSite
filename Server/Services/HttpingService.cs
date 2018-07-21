@@ -53,36 +53,12 @@ namespace StatusScreenSite.Services
                             for (int k = tgt.Recent.Count - 1; k >= 0; k--)
                             {
                                 var pt = tgt.Recent[k];
-                                if (pt.Timestamp > cutoff30m)
-                                {
-                                    last30m.TotalCount++;
-                                    if (pt.MsResponse == 0)
-                                        last30m.ErrorCount++;
-                                    else if (pt.MsResponse == 65535)
-                                        last30m.TimeoutCount++;
-                                    else
-                                        stamps30m.Add(pt.MsResponse);
-                                }
-                                if (pt.Timestamp > cutoff24h)
-                                {
-                                    last24h.TotalCount++;
-                                    if (pt.MsResponse == 0)
-                                        last24h.ErrorCount++;
-                                    else if (pt.MsResponse == 65535)
-                                        last24h.TimeoutCount++;
-                                    else
-                                        stamps24h.Add(pt.MsResponse);
-                                }
-                                if (pt.Timestamp > cutoff30d)
-                                {
-                                    last30d.TotalCount++;
-                                    if (pt.MsResponse == 0)
-                                        last30d.ErrorCount++;
-                                    else if (pt.MsResponse == 65535)
-                                        last30d.TimeoutCount++;
-                                    else
-                                        stamps30d.Add(pt.MsResponse);
-                                }
+                                if (pt.Timestamp > cutoff30m && last30m.CountSample(pt.MsResponse))
+                                    stamps30m.Add(pt.MsResponse);
+                                if (pt.Timestamp > cutoff24h && last24h.CountSample(pt.MsResponse))
+                                    stamps24h.Add(pt.MsResponse);
+                                if (pt.Timestamp > cutoff30d && last30d.CountSample(pt.MsResponse))
+                                    stamps30d.Add(pt.MsResponse);
                             }
                             stamps30m.Sort();
                             stamps24h.Sort();
@@ -304,15 +280,8 @@ namespace StatusScreenSite.Services
                     break; // none of the other points will be within this interval
                 if (pt.Timestamp >= startCurTs)
                     continue; // should never trigger but in case this method is called in other circumstances...
-                interval.TotalCount++;
-                if (pt.MsResponse == 65535)
-                    interval.TimeoutCount++;
-                else if (pt.MsResponse == 0)
-                    interval.ErrorCount++;
-                else
-                {
+                if (interval.CountSample(pt.MsResponse))
                     msResponse.Add(pt.MsResponse);
-                }
             }
             Ut.Assert(interval.TotalCount == interval.TimeoutCount + interval.ErrorCount + msResponse.Count);
             if (msResponse.Count > 0)
@@ -363,6 +332,18 @@ namespace StatusScreenSite.Services
         public int ErrorCount;
 
         public override string ToString() => $"{StartUtc} : {TotalCount:#,0} samples, {TimeoutCount + ErrorCount:#,0} timeouts/errors, {MsResponse}";
+
+        public bool CountSample(ushort msResponse)
+        {
+            TotalCount++;
+            if (msResponse == 65535)
+                TimeoutCount++;
+            else if (msResponse == 0)
+                ErrorCount++;
+            else
+                return true;
+            return false;
+        }
     }
 
     class HttpingDto : IServiceDto
@@ -394,6 +375,18 @@ namespace StatusScreenSite.Services
             MsResponsePrc75 = pt.MsResponse.Prc75;
             MsResponsePrc95 = pt.MsResponse.Prc95;
             MsResponsePrc99 = pt.MsResponse.Prc99;
+        }
+
+        public bool CountSample(ushort msResponse)
+        {
+            TotalCount++;
+            if (msResponse == 65535)
+                TimeoutCount++;
+            else if (msResponse == 0)
+                ErrorCount++;
+            else
+                return true;
+            return false;
         }
     }
 
