@@ -161,19 +161,15 @@ class Entry {
         let downtime30d = (dto.Last30d.ErrorCount + dto.Last30d.TimeoutCount) * 100 / dto.Last30d.TotalCount;
         this.$td30dErr.html(`${downtime30d.toFixed(2)}%`).css('color', downtime30d < 0.05 ? Colors.GreenText : downtime30d > 0.5 ? Colors.RedText : Colors.BlueText);
 
-        this._dataRecent.data(_.toArray(_(dto.Recent).map((v, i) => { return { x: i, y: v }; })));
-        if (this._data2min) {
-            this._data2min.prc01.data(_.toArray(_(dto.Twominutely).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc01 }; })));
-            this._data2min.prc50.data(_.toArray(_(dto.Twominutely).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc50 }; })));
-            this._data2min.prc75.data(_.toArray(_(dto.Twominutely).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc75 }; })));
-            this._data2min.prc95.data(_.toArray(_(dto.Twominutely).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc95 }; })));
-        }
-        if (this._dataDaily) {
-            this._dataDaily.prc01.data(_.toArray(_(dto.Daily).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc01 }; })));
-            this._dataDaily.prc50.data(_.toArray(_(dto.Daily).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc50 }; })));
-            this._dataDaily.prc75.data(_.toArray(_(dto.Daily).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc75 }; })));
-            this._dataDaily.prc95.data(_.toArray(_(dto.Daily).map((v, i) => { return { X: i, Total: v.TotalCount, Errs: v.ErrorCount + v.TimeoutCount, Ms: v.MsResponsePrc95 }; })));
-        }
+        this._dataRecent.data(dto.Recent);
+        this._data2min.prc01.data(dto.Twominutely);
+        this._data2min.prc50.data(dto.Twominutely);
+        this._data2min.prc75.data(dto.Twominutely);
+        this._data2min.prc95.data(dto.Twominutely);
+        this._dataDaily.prc01.data(dto.Daily);
+        this._dataDaily.prc50.data(dto.Daily);
+        this._dataDaily.prc75.data(dto.Daily);
+        this._dataDaily.prc95.data(dto.Daily);
     }
 
     public Redraw(): void {
@@ -201,9 +197,9 @@ class Entry {
                 .range([Colors.GreenBar, Colors.BlueBar, Colors.RedBar, Colors.FuchsiaBar]);
             this._plotRecent = new Plottable.Plots.Bar()
                 .addDataset(this._dataRecent)
-                .x(function (d) { return d.x; }, xScale)
-                .y(function (d) { return (d.y == 0 || d.y == 65535) ? 2000 : d.y; }, yScale)
-                .attr('fill', (d) => { return (d.y == 0 || d.y == 65535) ? "fuchsia" : d.y > this._redMsCutoff ? "red" : d.y > this._greenMsCutoff ? "blue" : "green"; }, colorScale)
+                .x(function (pt, i) { return i; }, xScale)
+                .y(function (pt, i) { return (pt == 0 || pt == 65535) ? 2000 : pt; }, yScale)
+                .attr('fill', (pt) => { return (pt == 0 || pt == 65535) ? "fuchsia" : pt > this._redMsCutoff ? "red" : pt > this._greenMsCutoff ? "blue" : "green"; }, colorScale)
                 .renderTo(<any>d3.select(Util.get(this.$tdChartRecent, 'div.plot')));
         }
 
@@ -214,8 +210,10 @@ class Entry {
 
     private initStackedPlot(target: HTMLElement, yScale: Plottable.Scale<{}, number>): [Datasets, Plottable.Plot] {
         var datas = {
-            prc01: new Plottable.Dataset([], { color: "green" }), prc50: new Plottable.Dataset([], { color: "yellow" }),
-            prc75: new Plottable.Dataset([], { color: "blue" }), prc95: new Plottable.Dataset([], { color: "red" }),
+            prc01: new Plottable.Dataset([], { type: "MsResponsePrc01", color: "green" }),
+            prc50: new Plottable.Dataset([], { type: "MsResponsePrc50", color: "yellow" }),
+            prc75: new Plottable.Dataset([], { type: "MsResponsePrc75", color: "blue" }),
+            prc95: new Plottable.Dataset([], { type: "MsResponsePrc95", color: "red" }),
         };
         let xScale = new Plottable.Scales.Linear().domainMin(-1).domainMax(30);
         let colorScale = new Plottable.Scales.Color()
@@ -226,9 +224,9 @@ class Entry {
             .addDataset(datas.prc75)
             .addDataset(datas.prc50)
             .addDataset(datas.prc01)
-            .x((d) => { return d.X; }, xScale)
-            .y((d) => { return d.Total > 0 ? d.Ms : 2000; }, yScale)
-            .attr('fill', (d, i, dataset) => { return d.Total > 0 ? dataset.metadata().color : d.Errs > 0 ? "fuchsia" : "grey"; }, colorScale)
+            .x((pt, i, ds) => { return i; }, xScale)
+            .y((pt, i, ds) => { return pt.TotalCount > 0 ? pt[ds.metadata().type] : 2000; }, yScale)
+            .attr('fill', (pt, i, ds) => { return pt.TotalCount > 0 ? ds.metadata().color : (pt.ErrorCount + pt.TimeoutCount) > 0 ? "fuchsia" : "grey"; }, colorScale)
             .renderTo(<any>d3.select(target));
         return [datas, plot];
     }
