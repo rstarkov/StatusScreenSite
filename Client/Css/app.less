@@ -159,16 +159,33 @@ div#PingService {
     }
     div#HttpingService {
         table.HttpingSummary {
+            border-collapse: collapse;
+            tbody tr:hover {
+                background: #222;
+            }
             th {
                 padding-bottom: 8px;
             }
-            td {
+            td,
+            th {
                 padding: 4px 14px;
                 text-align: center;
-                vertical-align: bottom;
             }
+            th:first-child,
             td:first-child {
                 text-align: left;
+            }
+            td {
+                vertical-align: bottom;
+            }
+            .groupleft.groupleft.groupleft.groupleft {
+                padding-left: 4px;
+            }
+            .groupright.groupright.groupright.groupright {
+                padding-right: 4px;
+            }
+            .borderright {
+                border-right: 1px solid #333;
             }
             td.plot {
                 text-align: left;

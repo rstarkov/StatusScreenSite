@@ -15,15 +15,22 @@ export class HttpingService extends Service {
     protected Start(): void {
         let $html = $(`
             <table class=HttpingSummary>
-                <thead><tr>
-                    <th>Site</th>
-                    <th>30 min</th>
-                    <th>24 hours</th>
-                    <th>30 days</th>
-                    <th>Recent chart</th>
-                    <th>2 min chart</th>
-                    <th>Daily chart</th>
-                </tr></thead>
+                <thead>
+                    <tr>
+                        <th rowspan=2>Site</th>
+                        <th colspan=2 class=borderright>30 min</th>
+                        <th colspan=2 class=borderright>24 hours</th>
+                        <th colspan=3>30 days</th>
+                        <th rowspan=2>Recent chart</th>
+                        <th rowspan=2>2 min chart</th>
+                        <th rowspan=2>Daily chart</th>
+                    </tr>
+                    <tr>
+                        <th class=groupright>50%</th><th class="groupleft borderright">95%</th>
+                        <th class=groupright>50%</th><th class="groupleft borderright">95%</th>
+                        <th class=groupright>50%</th><th class="groupleft groupright">95%</th><th class=groupleft>Down</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
         `);
@@ -54,9 +61,13 @@ interface Datasets { prc01: Plottable.Dataset, prc50: Plottable.Dataset, prc75: 
 class Entry {
     private $row: Util.Html;
     private $tdName: Util.Html;
-    private $td30m: Util.Html;
-    private $td24h: Util.Html;
-    private $td30d: Util.Html;
+    private $td30m50: Util.Html;
+    private $td30m95: Util.Html;
+    private $td24h50: Util.Html;
+    private $td24h95: Util.Html;
+    private $td30d50: Util.Html;
+    private $td30d95: Util.Html;
+    private $td30dErr: Util.Html;
     private $tdChartRecent: Util.Html;
     private $tdChart2min: Util.Html;
     private $tdChartDaily: Util.Html;
@@ -72,13 +83,20 @@ class Entry {
     public Add($tbody: Util.Html): void {
         this.$row = $('<tr>');
         this.$tdName = $('<td>');
-        this.$td30m = $('<td>');
-        this.$td24h = $('<td>');
-        this.$td30d = $('<td>');
+        this.$td30m50 = $('<td class=groupright></td>');
+        this.$td30m95 = $('<td class="groupleft borderright"></td>');
+        this.$td24h50 = $('<td class=groupright></td>');
+        this.$td24h95 = $('<td class="groupleft borderright"></td>');
+        this.$td30d50 = $('<td class=groupright></td>');
+        this.$td30d95 = $('<td class="groupleft groupright"></td>');
+        this.$td30dErr = $('<td class=groupleft></td>');
         this.$tdChartRecent = $('<td class="plot recent"><div class="plot recent"></div></td>');
         this.$tdChart2min = $('<td class="plot 2min"><div class="plot 2min"></div></td>');
         this.$tdChartDaily = $('<td class="plot daily"><div class="plot daily"></div></td>');
-        this.$row.append(this.$tdName).append(this.$td30m).append(this.$td24h).append(this.$td30d)
+        this.$row.append(this.$tdName)
+            .append(this.$td30m50).append(this.$td30m95)
+            .append(this.$td24h50).append(this.$td24h95)
+            .append(this.$td30d50).append(this.$td30d95).append(this.$td30dErr)
             .append(this.$tdChartRecent).append(this.$tdChart2min).append(this.$tdChartDaily);
         $tbody.append(this.$row);
         this._dataRecent = null;
@@ -93,9 +111,13 @@ class Entry {
             this.initialisePlots(dto);
 
         this.$tdName.text(dto.Name);
-        this.$td30m.html(`${dto.Last30m.MsResponsePrc50} &nbsp; ${dto.Last30m.MsResponsePrc95}`);
-        this.$td24h.html(`${dto.Last24h.MsResponsePrc50} &nbsp; ${dto.Last24h.MsResponsePrc95}`);
-        this.$td30d.html(`${dto.Last30d.MsResponsePrc50} &nbsp; ${((dto.Last30d.ErrorCount + dto.Last30d.TimeoutCount) * 100 / dto.Last30d.TotalCount).toFixed(2)}%`);
+        this.$td30m50.html(`${dto.Last30m.MsResponsePrc50}`);
+        this.$td30m95.html(`${dto.Last30m.MsResponsePrc95}`);
+        this.$td24h50.html(`${dto.Last24h.MsResponsePrc50}`);
+        this.$td24h95.html(`${dto.Last24h.MsResponsePrc95}`);
+        this.$td30d50.html(`${dto.Last30d.MsResponsePrc50}`);
+        this.$td30d95.html(`${dto.Last30d.MsResponsePrc95}`);
+        this.$td30dErr.html(`${((dto.Last30d.ErrorCount + dto.Last30d.TimeoutCount) * 100 / dto.Last30d.TotalCount).toFixed(2)}%`);
 
         this._dataRecent.data(_.toArray(_(dto.Recent).map((v, i) => { return { x: i, y: v }; })));
         if (this._data2min) {
