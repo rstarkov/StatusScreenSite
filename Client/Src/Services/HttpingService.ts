@@ -58,6 +58,20 @@ export class HttpingService extends Service {
 
 interface Datasets { prc01: Plottable.Dataset, prc50: Plottable.Dataset, prc75: Plottable.Dataset, prc95: Plottable.Dataset }
 
+class Colors {
+    static readonly GreenText = '#08b025';
+    static readonly GreenBrightText = '#4ef459';
+    static readonly BlueText = '#1985f3';
+    static readonly RedText = '#ff0000';
+
+    static readonly GreenBar = '#08b025';
+    static readonly YellowBar = '#ffff00';
+    static readonly BlueBar = '#1985f3';
+    static readonly RedBar = '#ff0000';
+    static readonly FuchsiaBar = '#ff00ff';
+    static readonly GreyBar = '#404040';
+}
+
 class Entry {
     private $row: Util.Html;
     private $tdName: Util.Html;
@@ -114,28 +128,28 @@ class Entry {
 
         let set50prc = (tgt: Util.Html, time: number) => {
             tgt.html(`${time}`).css('color',
-                time <= dto.Last30d.MsResponsePrc75 ? "#08b025"
-                    : time >= dto.Last30d.MsResponsePrc75 * 1.5 ? "#ff0000"
-                        : '#1985f3');
+                time <= dto.Last30d.MsResponsePrc75 ? Colors.GreenText
+                    : time >= dto.Last30d.MsResponsePrc75 * 1.5 ? Colors.RedText
+                        : Colors.BlueText);
         }
         let set95prc = (tgt: Util.Html, time50prc: number, time95prc: number) => {
             tgt.html(`${time95prc}`).css('color',
-                time95prc < time50prc * 1.1 ? "#08b025"
-                    : time95prc < time50prc * 1.3 ? "#4ef459"
-                        : time95prc > time50prc * 1.8 ? "#ff0000"
-                            : '#1985f3');
+                time95prc < time50prc * 1.1 ? Colors.GreenText
+                    : time95prc < time50prc * 1.3 ? Colors.GreenBrightText
+                        : time95prc > time50prc * 1.8 ? Colors.RedText
+                            : Colors.BlueText);
         }
         set50prc(this.$td30m50, dto.Last30m.MsResponsePrc50);
         set95prc(this.$td30m95, dto.Last30m.MsResponsePrc50, dto.Last30m.MsResponsePrc95);
         set50prc(this.$td24h50, dto.Last24h.MsResponsePrc50);
         set95prc(this.$td24h95, dto.Last24h.MsResponsePrc50, dto.Last24h.MsResponsePrc95);
         this.$td30d50.html(`${dto.Last30d.MsResponsePrc50}`).css('color',
-            dto.Last30d.MsResponsePrc50 < 100 ? '#08b025'
-                : dto.Last30d.MsResponsePrc50 > 400 ? '#ff0000'
-                    : '#1985f3');
+            dto.Last30d.MsResponsePrc50 < 100 ? Colors.GreenText
+                : dto.Last30d.MsResponsePrc50 > 400 ? Colors.RedText
+                    : Colors.BlueText);
         set95prc(this.$td30d95, dto.Last30d.MsResponsePrc50, dto.Last30d.MsResponsePrc95);
         let downtime30d = (dto.Last30d.ErrorCount + dto.Last30d.TimeoutCount) * 100 / dto.Last30d.TotalCount;
-        this.$td30dErr.html(`${downtime30d.toFixed(2)}%`).css('color', downtime30d < 0.05 ? '#08b025' : downtime30d > 0.5 ? '#ff0000' : '#1985f3');
+        this.$td30dErr.html(`${downtime30d.toFixed(2)}%`).css('color', downtime30d < 0.05 ? Colors.GreenText : downtime30d > 0.5 ? Colors.RedText : Colors.BlueText);
 
         this._dataRecent.data(_.toArray(_(dto.Recent).map((v, i) => { return { x: i, y: v }; })));
         if (this._data2min) {
@@ -174,7 +188,7 @@ class Entry {
             let xScale = new Plottable.Scales.Linear().domainMin(-1).domainMax(30);
             let colorScale = new Plottable.Scales.Color()
                 .domain(["green", "blue", "red", "fuchsia"])
-                .range(['#08b025', '#1985f3', '#ff0000', '#ff00ff']);
+                .range([Colors.GreenBar, Colors.BlueBar, Colors.RedBar, Colors.FuchsiaBar]);
             this._plotRecent = new Plottable.Plots.Bar()
                 .addDataset(this._dataRecent)
                 .x(function (d) { return d.x; }, xScale)
@@ -196,7 +210,7 @@ class Entry {
         let xScale = new Plottable.Scales.Linear().domainMin(-1).domainMax(30);
         let colorScale = new Plottable.Scales.Color()
             .domain(["green", "yellow", "blue", "red", "fuchsia", "grey"])
-            .range(['#08b025', '#ffff00', '#1985f3', '#ff0000', '#ff00ff', '#404040']);
+            .range([Colors.GreenBar, Colors.YellowBar, Colors.BlueBar, Colors.RedBar, Colors.FuchsiaBar, Colors.GreyBar]);
         var plot = new Plottable.Plots.Bar()
             .addDataset(datas.prc95)
             .addDataset(datas.prc75)
