@@ -3,6 +3,7 @@ const ManifestPlugin = require('webpack-manifest-plugin');
 const DynamicCdnWebpackPlugin = require('dynamic-cdn-webpack-plugin');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const LessPluginAutoPrefix = require('less-plugin-autoprefix');
+const UglifyPlugin = require("uglifyjs-webpack-plugin");
 
 const extractLess = new ExtractTextPlugin({
   filename: "app.css"
@@ -14,8 +15,11 @@ module.exports = {
 
   output: {
     filename: 'app.js',
+    sourceMapFilename: '[file].map',
     path: path.resolve(__dirname, '../Builds/Static')
   },
+
+  devtool: 'source-map',
 
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.less']
@@ -36,7 +40,7 @@ module.exports = {
             loader: 'less-loader',
             options: {
               plugins: [
-                new LessPluginAutoPrefix({browsers: ["last 3 versions"]})
+                new LessPluginAutoPrefix({ browsers: ["last 3 versions"] })
               ]
             }
           }]
@@ -46,6 +50,7 @@ module.exports = {
   },
 
   plugins: [
+    new UglifyPlugin(),
     new ManifestPlugin({
       fileName: 'manifest.json'
     }),
