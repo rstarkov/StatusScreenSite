@@ -59,6 +59,8 @@ module.exports = {
           return { name: 'plottable', url: 'https://cdnjs.cloudflare.com/ajax/libs/plottable.js/' + version + '/plottable.min.js', var: 'Plottable' };
         else if (modulePath == 'd3')
           return { name: 'd3', url: 'https://cdnjs.cloudflare.com/ajax/libs/d3/' + version + '/d3.min.js', var: 'd3' };
+        else if (modulePath == 'moment')
+          return { name: 'moment', url: 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/' + version + '/moment.min.js', var: 'moment' };
         else
           return null;
       }
