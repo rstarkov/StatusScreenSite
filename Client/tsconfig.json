@@ -1,17 +1,10 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "downlevelIteration": true,
+        "moduleResolution": "Node",
         //"noUnusedLocals": true,
-        //"allowUnreachableCode": true,
-        "lib": [
-            "dom",
-            "es6",
-            "es2015.iterable",
-            "scripthost"
-        ]
     }
 }
