@@ -55,8 +55,8 @@ module.exports = {
           return { name: 'lodash', url: 'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/' + version + '/lodash.min.js', var: '_' };
         else if (modulePath == 'jquery')
           return { name: 'jquery', url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/' + version + '/jquery.min.js', var: '$' };
-        //else if (modulePath == 'plottable')
-        //  return { name: 'plottable', url: 'https://cdnjs.cloudflare.com/ajax/libs/plottable.js/' + version + '/plottable.min.js', var: 'plottable' };
+        else if (modulePath == 'plottable')
+          return { name: 'plottable', url: 'https://cdnjs.cloudflare.com/ajax/libs/plottable.js/' + version + '/plottable.min.js', var: 'Plottable' };
         else if (modulePath == 'd3')
           return { name: 'd3', url: 'https://cdnjs.cloudflare.com/ajax/libs/d3/' + version + '/d3.min.js', var: 'd3' };
         else
