@@ -98,12 +98,12 @@ namespace StatusScreenSite.Services
 
         private void SetPercentiles(ref HttpingIntervalDto stat, List<ushort> sortedValues)
         {
-            stat.MsResponsePrc01 = sortedValues[(sortedValues.Count - 1) * 1 / 100];
-            stat.MsResponsePrc25 = sortedValues[(sortedValues.Count - 1) * 25 / 100];
-            stat.MsResponsePrc50 = sortedValues[(sortedValues.Count - 1) * 50 / 100];
-            stat.MsResponsePrc75 = sortedValues[(sortedValues.Count - 1) * 75 / 100];
-            stat.MsResponsePrc95 = sortedValues[(sortedValues.Count - 1) * 95 / 100];
-            stat.MsResponsePrc99 = sortedValues[(sortedValues.Count - 1) * 99 / 100];
+            stat.MsResponsePrc01 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 1 / 100];
+            stat.MsResponsePrc25 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 25 / 100];
+            stat.MsResponsePrc50 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 50 / 100];
+            stat.MsResponsePrc75 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 75 / 100];
+            stat.MsResponsePrc95 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 95 / 100];
+            stat.MsResponsePrc99 = sortedValues.Count == 0 ? (ushort) 0 : sortedValues[(sortedValues.Count - 1) * 99 / 100];
         }
 
         private HttpingIntervalDto[] GetIntervalDto(QueueViewable<HttpingPointInterval> data, TimeSpan interval, Func<DateTime, DateTime> getIntervalStart)
