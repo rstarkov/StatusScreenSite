@@ -225,8 +225,8 @@ class Entry {
             .addDataset(datas.prc50)
             .addDataset(datas.prc01)
             .x((pt, i, ds) => { return i; }, xScale)
-            .y((pt, i, ds) => { return pt.TotalCount > 0 ? pt[ds.metadata().type] : 2000; }, yScale)
-            .attr('fill', (pt, i, ds) => { return pt.TotalCount > 0 ? ds.metadata().color : (pt.ErrorCount + pt.TimeoutCount) > 0 ? "fuchsia" : "grey"; }, colorScale)
+            .y((pt, i, ds) => { return (pt.TotalCount - pt.ErrorCount - pt.TimeoutCount) > 0 ? pt[ds.metadata().type] : 2000; }, yScale)
+            .attr('fill', (pt, i, ds) => { return (pt.TotalCount - pt.ErrorCount - pt.TimeoutCount) > 0 ? ds.metadata().color : (pt.ErrorCount + pt.TimeoutCount) > 0 ? "fuchsia" : "grey"; }, colorScale)
             .renderTo(<any>d3.select(target));
         return [datas, plot];
     }
