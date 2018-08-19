@@ -26,7 +26,7 @@ namespace StatusScreenSite.Services
         public override void Start()
         {
             foreach (var tgt in Settings.Targets)
-                tgt.Start();
+                tgt.Start(this);
             new Thread(thread) { IsBackground = true }.Start();
         }
 
@@ -174,13 +174,9 @@ namespace StatusScreenSite.Services
 
         public override string ToString() => $"{Name} ({Url}) : {Recent.Count:#,0} recent, {Twominutely.Count:#,0} twomin, {Hourly.Count:#,0} hourly, {Daily.Count:#,0} daily, {Monthly.Count:#,0} monthly";
 
-        public HttpingTarget(HttpingService svc)
+        public void Start(HttpingService svc)
         {
             _svc = svc;
-        }
-
-        public void Start()
-        {
             _timezone = TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
             new Thread(thread) { IsBackground = true }.Start();
         }
