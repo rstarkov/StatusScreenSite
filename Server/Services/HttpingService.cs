@@ -112,7 +112,7 @@ namespace StatusScreenSite.Services
         private HttpingIntervalDto[] GetIntervalDto(QueueViewable<HttpingPointInterval> data, TimeSpan interval, Func<DateTime, DateTime> getIntervalStart)
         {
             const int count = 30;
-            var cur = getIntervalStart(DateTime.UtcNow) - interval;
+            var cur = getIntervalStart(getIntervalStart(DateTime.UtcNow) - interval);
             var result = new List<HttpingIntervalDto>();
             for (int i = data.Count - 1; i >= 0; i--)
             {
@@ -122,13 +122,13 @@ namespace StatusScreenSite.Services
                 while (pt.StartUtc < cur && result.Count < count)
                 {
                     result.Add(new HttpingIntervalDto { TotalCount = 0 });
-                    cur -= interval;
+                    cur = getIntervalStart(cur - interval);
                 }
                 if (result.Count >= count)
                     break;
                 Ut.Assert(pt.StartUtc == cur);
                 result.Add(new HttpingIntervalDto(pt));
-                cur -= interval;
+                cur = getIntervalStart(cur - interval);
             }
             while (result.Count < count)
                 result.Add(new HttpingIntervalDto { TotalCount = 0 });
