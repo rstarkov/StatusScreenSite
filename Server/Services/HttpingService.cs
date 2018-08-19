@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -15,9 +15,12 @@ namespace StatusScreenSite.Services
     {
         public override string ServiceName => "HttpingService";
 
-        public HttpingService(Server server, HttpingSettings serviceSettings)
+        private PingService _pingSvc;
+
+        public HttpingService(Server server, HttpingSettings serviceSettings, PingService pingSvc)
             : base(server, serviceSettings)
         {
+            _pingSvc = pingSvc;
         }
 
         public override void Start()
@@ -134,6 +137,13 @@ namespace StatusScreenSite.Services
             result.Reverse();
             return result.ToArray();
         }
+
+        public bool IsGoodInternetConnection()
+        {
+            // is ok if we have at least 4 pings in the last 30s, all of which are under 35 ms
+            var pings = _pingSvc.RecentPings.Where(p => p.utc >= DateTime.UtcNow.AddSeconds(-30));
+            return pings.Count() >= 4 && pings.All(p => p.ms != null && p.ms < 35);
+        }
     }
 
     class HttpingSettings
@@ -159,8 +169,15 @@ namespace StatusScreenSite.Services
         private TimeZoneInfo _timezone;
         [ClassifyIgnore]
         public object Lock = new object();
+        [ClassifyIgnore]
+        private HttpingService _svc;
 
         public override string ToString() => $"{Name} ({Url}) : {Recent.Count:#,0} recent, {Twominutely.Count:#,0} twomin, {Hourly.Count:#,0} hourly, {Daily.Count:#,0} daily, {Monthly.Count:#,0} monthly";
+
+        public HttpingTarget(HttpingService svc)
+        {
+            _svc = svc;
+        }
 
         public void Start()
         {
@@ -184,11 +201,15 @@ namespace StatusScreenSite.Services
                     var start = DateTime.UtcNow;
                     try
                     {
+                        if (!_svc.IsGoodInternetConnection())
+                            goto skip;
                         var response = hc.GetAsync(Url).GetAwaiter().GetResult();
                         var bytes = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
                         msResponse = (DateTime.UtcNow - start).TotalMilliseconds;
                         if (response.StatusCode == System.Net.HttpStatusCode.OK && Encoding.UTF8.GetString(bytes).Contains(MustContain))
                             ok = true;
+                        if (!_svc.IsGoodInternetConnection())
+                            goto skip;
                     }
                     catch
                     {
@@ -234,6 +255,7 @@ namespace StatusScreenSite.Services
                 {
                 }
 
+                skip:
                 Util.SleepUntil(next);
             }
         }
