@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using RT.Util;
 using RT.Util.Serialization;
@@ -28,6 +29,8 @@ namespace StatusScreenSite
             SettingsUtil.LoadSettings(out Settings);
             Server = new Server(Settings);
             Server.Start();
+            using (var p = Process.GetCurrentProcess())
+                p.PriorityClass = ProcessPriorityClass.Idle;
             while (true)
                 Thread.Sleep(TimeSpan.FromMinutes(1));
         }
