@@ -1,10 +1,17 @@
-﻿namespace StatusScreenSite
+﻿using System;
+using System.IO;
+using System.IO.Compression;
+using System.Text;
+using Newtonsoft.Json;
+
+namespace StatusScreenSite
 {
     interface IService
     {
         string ServiceName { get; }
         void Start();
         IServiceDto LastUpdate { get; }
+        byte[] LastUpdateSerialized { get; }
     }
 
     abstract class ServiceBase<TSettings, TDto> : IService
@@ -14,6 +21,7 @@
         private Server Server { get; set; }
         protected TSettings Settings { get; private set; }
         public IServiceDto LastUpdate { get; private set; }
+        public byte[] LastUpdateSerialized { get; private set; }
 
         public abstract void Start();
 
@@ -26,7 +34,14 @@
         protected void SendUpdate(TDto dto)
         {
             LastUpdate = dto;
-            Server.SendUpdate(ServiceName, dto);
+            using (var ms = new MemoryStream())
+            {
+                using (var gz = new DeflateStream(ms, CompressionLevel.Optimal, true))
+                using (var wr = new StreamWriter(gz))
+                    new JsonSerializer().Serialize(wr, new { ServiceName, CurrentTimeUtc = DateTime.UtcNow, Data = (object) dto });
+                LastUpdateSerialized = ms.ToArray();
+            }
+            Server.SendUpdate(ServiceName, LastUpdateSerialized);
         }
 
         protected void SaveSettings()

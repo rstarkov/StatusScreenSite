@@ -72,7 +72,12 @@ namespace StatusScreenSite
         {
             var sb = new StringBuilder();
             foreach (var pt in instance)
-                sb.Append($"{pt.Timestamp},{pt.MsResponse};");
+            {
+                sb.Append(pt.Timestamp);
+                sb.Append(',');
+                sb.Append(pt.MsResponse);
+                sb.Append(';');
+            }
             return sb.ToString();
         }
 

@@ -1,4 +1,5 @@
 import * as moment from 'moment';
+import * as pako from 'pako';
 import { App } from './App';
 import { IServiceDto } from './Dto';
 import { Service } from './Service';
@@ -45,11 +46,18 @@ export class Api {
         this.socket.onmessage = (evt) => {
             this.app.ShowDisconnected(false);
             this.resetReconnect(20000);
-            let msg: ApiMessage = JSON.parse(evt.data);
-            this.SetTimeOffset(moment.duration(moment(msg.CurrentTimeUtc).utc().diff(moment.utc())));
-            var svc = this.services.get(msg.ServiceName);
-            if (svc)
-                svc.Update(msg.Data);
+            // could this be any uglier?...
+            var reader = new FileReader();
+            reader.onload = (read) => {
+                let data = (read.target as any).result; // ... I guess it could! https://stackoverflow.com/a/35790786/33080
+                let msg: ApiMessage = JSON.parse(new TextDecoder("utf-8").decode(pako.inflateRaw(data)));
+                this.SetTimeOffset(moment.duration(moment(msg.CurrentTimeUtc).utc().diff(moment.utc())));
+                console.log(`API: ${msg.ServiceName}, ${data.byteLength} bytes`);
+                var svc = this.services.get(msg.ServiceName);
+                if (svc)
+                    svc.Update(msg.Data);
+            };
+            reader.readAsArrayBuffer(evt.data);
         };
     }
 

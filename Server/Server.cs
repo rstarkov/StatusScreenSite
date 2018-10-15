@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RT.Servers;
 using RT.TagSoup;
@@ -175,18 +174,17 @@ namespace StatusScreenSite
             return HttpResponse.WebSocket(ws);
         }
 
-        public void SendUpdate(string serviceName, IServiceDto dto)
+        public void SendUpdate(string serviceName, byte[] dtoSerialized)
         {
             foreach (var ws in _sockets.Keys)
-                sendUpdateToSocket(serviceName, dto, ws);
+                sendUpdateToSocket(serviceName, dtoSerialized, ws);
         }
 
-        private void sendUpdateToSocket(string serviceName, IServiceDto dto, ApiWebSocket ws)
+        private void sendUpdateToSocket(string serviceName, byte[] dtoSerialized, ApiWebSocket ws)
         {
             try
             {
-                var msg = JsonConvert.SerializeObject(new { ServiceName = serviceName, CurrentTimeUtc = DateTime.UtcNow, Data = (object) dto });
-                ws.SendMessage(msg);
+                ws.SendMessage(dtoSerialized);
             }
             catch { }
         }
@@ -222,7 +220,7 @@ namespace StatusScreenSite
             {
                 foreach (var svc in _server._services)
                     if (svc.LastUpdate != null && svc.LastUpdate.ValidUntilUtc > DateTime.UtcNow)
-                        _server.sendUpdateToSocket(svc.ServiceName, svc.LastUpdate, this);
+                        _server.sendUpdateToSocket(svc.ServiceName, svc.LastUpdateSerialized, this);
             }
 
             protected override void onEndConnection()
