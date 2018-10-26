@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Dapper;
+using Dapper.Contrib.Extensions;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
@@ -14,6 +16,8 @@ namespace StatusScreenSite.Services
     {
         public override string ServiceName => "RouterService";
 
+        private Queue<RouterHistoryPoint> _history = new Queue<RouterHistoryPoint>();
+
         public RouterService(Server server, RouterSettings serviceSettings)
             : base(server, serviceSettings)
         {
@@ -21,6 +25,16 @@ namespace StatusScreenSite.Services
 
         public override void Start()
         {
+            using (var db = Db.Open())
+            {
+                _history = db.Query<TbRouterHistoryEntry>(
+                        $@"SELECT * FROM {nameof(TbRouterHistoryEntry)} WHERE {nameof(TbRouterHistoryEntry.Timestamp)} >= @limit ORDER BY {nameof(TbRouterHistoryEntry.Timestamp)}",
+                        new { limit = DateTime.UtcNow.AddHours(-24).ToDbDateTime() }
+                    )
+                    .Select(pt => new RouterHistoryPoint { Timestamp = pt.Timestamp.FromDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal })
+                    .ToQueue();
+            }
+
             new Thread(thread) { IsBackground = true }.Start();
         }
 
@@ -45,7 +59,7 @@ namespace StatusScreenSite.Services
         {
             var http = new HClient();
             login(http);
-            var ptPrev = Settings.History.LastOrDefault();
+            var ptPrev = _history.LastOrDefault();
             double avgRx = 0;
             double avgTx = 0;
             double avgRxFast = 0;
@@ -78,9 +92,12 @@ namespace StatusScreenSite.Services
                     catch { }
                 }
 
-                Settings.History.Enqueue(pt);
-                while (Settings.History.Peek().Timestamp < DateTime.UtcNow.AddHours(-24))
-                    Settings.History.Dequeue();
+                _history.Enqueue(pt);
+                while (_history.Peek().Timestamp < DateTime.UtcNow.AddHours(-24))
+                    _history.Dequeue();
+
+                using (var db = Db.Open())
+                    db.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal });
 
                 if (ptPrev != null)
                 {
@@ -120,8 +137,8 @@ namespace StatusScreenSite.Services
                     {
                         var from = new DateTime(pt.Timestamp.Year, pt.Timestamp.Month, pt.Timestamp.Day, pt.Timestamp.Hour, 0, 0, DateTimeKind.Utc).AddHours(-24 + h);
                         var to = from.AddHours(1);
-                        var earliest = Settings.History.Where(p => p.Timestamp >= from && p.Timestamp < to).MinElementOrDefault(p => p.Timestamp);
-                        var latest = Settings.History.Where(p => p.Timestamp >= from && p.Timestamp < to).MaxElementOrDefault(p => p.Timestamp);
+                        var earliest = _history.Where(p => p.Timestamp >= from && p.Timestamp < to).MinElementOrDefault(p => p.Timestamp);
+                        var latest = _history.Where(p => p.Timestamp >= from && p.Timestamp < to).MaxElementOrDefault(p => p.Timestamp);
                         RouterHistoryPointDto result = null;
                         if (earliest != null && earliest.Timestamp != latest.Timestamp)
                             result = new RouterHistoryPointDto
@@ -147,6 +164,24 @@ namespace StatusScreenSite.Services
 
         public override bool MigrateSchema(SQLiteConnection db, int curVersion)
         {
+            if (curVersion == 0)
+            {
+                db.Execute($@"CREATE TABLE {nameof(TbRouterHistoryEntry)} (
+                    {nameof(TbRouterHistoryEntry.Timestamp)} INTEGER PRIMARY KEY,
+                    {nameof(TbRouterHistoryEntry.TxTotal)} BIGINT NOT NULL,
+                    {nameof(TbRouterHistoryEntry.RxTotal)} BIGINT NOT NULL
+                )");
+                using (var trn = db.BeginTransaction())
+                {
+#pragma warning disable 612
+                    foreach (var pt in Settings.History)
+                        db.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal }, trn);
+                    trn.Commit();
+#pragma warning restore 612
+                }
+                return true;
+            }
+
             return false;
         }
     }
@@ -158,6 +193,8 @@ namespace StatusScreenSite.Services
         public double AverageDecay = 0.90;
         public double AverageDecayFast = 0.50;
         public string LoginAuth = "base64(user:pass)";
+
+        [Obsolete]
         public Queue<RouterHistoryPoint> History = new Queue<RouterHistoryPoint>();
     }
 
@@ -183,5 +220,13 @@ namespace StatusScreenSite.Services
     {
         public double TxRate { get; set; }
         public double RxRate { get; set; }
+    }
+
+    class TbRouterHistoryEntry
+    {
+        [ExplicitKey]
+        public long Timestamp { get; set; }
+        public long TxTotal { get; set; }
+        public long RxTotal { get; set; }
     }
 }
