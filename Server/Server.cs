@@ -42,7 +42,6 @@ namespace StatusScreenSite
 
             server.Handler = serverHandler;
             server.ErrorHandler = exceptionHandler;
-            server.StartListening(blocking: false);
 
             _services.Add(new ReloadService(this, _settings.StaticPath));
             _services.Add(new WeatherService(this, _settings.WeatherSettings));
@@ -51,8 +50,13 @@ namespace StatusScreenSite
             _services.Add(new HttpingService(this, _settings.HttpingSettings, _services.OfType<PingService>().Single()));
             _services.Add(new RouterService(this, _settings.RouterSettings));
 
+            var absoluteDbPath = Path.Combine(Path.GetDirectoryName(SettingsUtil.GetAttribute<Settings>().GetFileName()), _settings.DbFilePath);
+            Db.Initialise(absoluteDbPath, _services);
+
             foreach (var svc in _services)
                 svc.Start();
+
+            server.StartListening(blocking: false);
         }
 
         private HttpResponse serverHandler(HttpRequest req)

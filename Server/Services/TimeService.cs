@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Linq;
 using System.Threading;
 
@@ -44,6 +45,11 @@ namespace StatusScreenSite.Services
         private double getUtcOffset(string timezoneName)
         {
             return TimeZoneInfo.FindSystemTimeZoneById(timezoneName).GetUtcOffset(DateTimeOffset.UtcNow).TotalHours;
+        }
+
+        public override bool MigrateSchema(SQLiteConnection db, int curVersion)
+        {
+            return false;
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -129,6 +130,11 @@ namespace StatusScreenSite.Services
                     color = GraphicsUtil.ColorBlend(warmest, coldest, (cur - (mean - stdev)) / (2 * stdev));
             }
             return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        }
+
+        public override bool MigrateSchema(SQLiteConnection db, int curVersion)
+        {
+            return false;
         }
     }
 

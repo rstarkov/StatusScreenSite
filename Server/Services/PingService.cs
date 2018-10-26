@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
+using Dapper;
+using Dapper.Contrib.Extensions;
 
 namespace StatusScreenSite.Services
 {
@@ -40,6 +43,9 @@ namespace StatusScreenSite.Services
                     else
                         dto.Last = null;
 
+                    using (var db = Db.Open())
+                        db.Insert(new TbPingHistoryEntry { Timestamp = utc.ToDbDateTime(), Ping = dto.Last });
+
                     _recentPings.Enqueue((dto.Last, utc));
                     while (_recentPings.Count > 24)
                         _recentPings.Dequeue();
@@ -54,6 +60,20 @@ namespace StatusScreenSite.Services
                 Util.SleepUntil(start.AddSeconds(5));
             }
         }
+
+        public override bool MigrateSchema(SQLiteConnection db, int curVersion)
+        {
+            if (curVersion == 0)
+            {
+                db.Execute($@"CREATE TABLE {nameof(TbPingHistoryEntry)} (
+                    {nameof(TbPingHistoryEntry.Timestamp)} INTEGER PRIMARY KEY,
+                    {nameof(TbPingHistoryEntry.Ping)} INT NULL
+                )");
+                return true;
+            }
+
+            return false;
+        }
     }
 
     class PingSettings
@@ -66,5 +86,12 @@ namespace StatusScreenSite.Services
         public DateTime ValidUntilUtc { get; set; }
         public int? Last { get; set; }
         public int?[] Recent { get; set; }
+    }
+
+    class TbPingHistoryEntry
+    {
+        [ExplicitKey]
+        public long Timestamp { get; set; }
+        public int? Ping { get; set; }
     }
 }

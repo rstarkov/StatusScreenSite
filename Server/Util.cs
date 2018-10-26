@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 
 namespace StatusScreenSite
@@ -23,5 +24,16 @@ namespace StatusScreenSite
         {
             return _unixepoch.AddSeconds(time);
         }
+
+        public static string GetNonexistentFileName(Func<int, string> getFileName)
+        {
+            string newname;
+            for (int num = 0; ; num++)
+                if (!File.Exists(newname = getFileName(num)))
+                    return newname;
+        }
+
+        public static long ToDbDateTime(this DateTime dt) => (long) (dt.ToUniversalTime() - _unixepoch).TotalMilliseconds;
+        public static long? ToDbDateTime(this DateTime? dt) => dt?.ToDbDateTime() ?? null;
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Data.SQLite;
 using System.IO;
 using System.IO.Compression;
-using System.Text;
 using Newtonsoft.Json;
 
 namespace StatusScreenSite
@@ -9,6 +9,7 @@ namespace StatusScreenSite
     interface IService
     {
         string ServiceName { get; }
+        bool MigrateSchema(SQLiteConnection db, int curVersion);
         void Start();
         IServiceDto LastUpdate { get; }
         byte[] LastUpdateSerialized { get; }
@@ -23,6 +24,7 @@ namespace StatusScreenSite
         public IServiceDto LastUpdate { get; private set; }
         public byte[] LastUpdateSerialized { get; private set; }
 
+        public abstract bool MigrateSchema(SQLiteConnection db, int curVersion);
         public abstract void Start();
 
         public ServiceBase(Server server, TSettings serviceSettings)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -143,6 +144,11 @@ namespace StatusScreenSite.Services
             // is ok if we have at least 4 pings in the last 30s, all of which are under 35 ms
             var pings = _pingSvc.RecentPings.Where(p => p.utc >= DateTime.UtcNow.AddSeconds(-30));
             return pings.Count() >= 4 && pings.All(p => p.ms != null && p.ms < 35);
+        }
+
+        public override bool MigrateSchema(SQLiteConnection db, int curVersion)
+        {
+            return false;
         }
     }
 

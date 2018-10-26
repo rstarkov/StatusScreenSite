@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -58,6 +59,11 @@ namespace StatusScreenSite.Services
                     Thread.Sleep(TimeSpan.FromSeconds(60));
                 }
             }
+        }
+
+        public override bool MigrateSchema(SQLiteConnection db, int curVersion)
+        {
+            return false;
         }
     }
 
