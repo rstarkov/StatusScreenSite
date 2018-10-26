@@ -6,6 +6,8 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Dapper;
+using Dapper.Contrib.Extensions;
 using Innovative.SolarCalculator;
 using RT.Util;
 using RT.Util.Drawing;
@@ -17,6 +19,8 @@ namespace StatusScreenSite.Services
     {
         public override string ServiceName => "WeatherService";
 
+        private Dictionary<DateTime, decimal> _temperatures = new Dictionary<DateTime, decimal>();
+
         public WeatherService(Server server, WeatherSettings serviceSettings)
             : base(server, serviceSettings)
         {
@@ -24,6 +28,10 @@ namespace StatusScreenSite.Services
 
         public override void Start()
         {
+            using (var db = Db.Open())
+                _temperatures = db.Query<TbWeatherTemperature>($@"SELECT * FROM {nameof(TbWeatherTemperature)} WHERE {nameof(TbWeatherTemperature.Timestamp)} > @limit", new { limit = DateTime.UtcNow.AddDays(-8).ToDbDateTime() })
+                    .ToDictionary(r => r.Timestamp.FromDbDateTime(), r => (decimal) r.Temperature);
+
             new Thread(thread) { IsBackground = true }.Start();
         }
 
@@ -39,15 +47,18 @@ namespace StatusScreenSite.Services
                     var dt = DateTime.ParseExact(datetime.Groups["date"].Value + "@" + datetime.Groups["time"].Value, "dd MMM yy'@'h:mm tt", null);
                     var curTemp = decimal.Parse(Regex.Match(result, @"Temperature:\s+(?<temp>-?\d+(\.\d)?) C").Groups["temp"].Value);
 
-                    Settings.Temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromDays(8));
-                    Settings.Temperatures[DateTime.UtcNow] = curTemp;
+                    _temperatures.RemoveAllByKey(date => date < DateTime.UtcNow - TimeSpan.FromDays(8));
+                    _temperatures[DateTime.UtcNow] = curTemp;
+
+                    using (var db = Db.Open())
+                        db.Insert(new TbWeatherTemperature { Timestamp = DateTime.UtcNow.ToDbDateTime(), Temperature = (double) curTemp });
 
                     var dto = new WeatherDto();
                     dto.ValidUntilUtc = DateTime.UtcNow + TimeSpan.FromMinutes(30);
 
-                    dto.CurTemperature = Settings.Temperatures.Where(kvp => kvp.Key >= DateTime.UtcNow.AddMinutes(-15)).Average(kvp => kvp.Value);
+                    dto.CurTemperature = _temperatures.Where(kvp => kvp.Key >= DateTime.UtcNow.AddMinutes(-15)).Average(kvp => kvp.Value);
 
-                    var temps = Settings.Temperatures.OrderBy(kvp => kvp.Key).ToList();
+                    var temps = _temperatures.OrderBy(kvp => kvp.Key).ToList();
                     var avg = temps.Select(kvp => (time: kvp.Key, temp: temps.Where(x => x.Key >= kvp.Key.AddMinutes(-7.5) && x.Key <= kvp.Key.AddMinutes(7.5)).Average(x => x.Value))).ToList();
 
                     var min = findExtreme(avg, 5, seq => seq.MinElement(x => x.temp));
@@ -66,7 +77,6 @@ namespace StatusScreenSite.Services
 
                     PopulateSunriseSunset(dto, DateTime.Today);
 
-                    SaveSettings();
                     SendUpdate(dto);
                 }
                 catch
@@ -134,15 +144,34 @@ namespace StatusScreenSite.Services
 
         public override bool MigrateSchema(SQLiteConnection db, int curVersion)
         {
+            if (curVersion == 0)
+            {
+                db.Execute($@"CREATE TABLE {nameof(TbWeatherTemperature)} (
+                    {nameof(TbWeatherTemperature.Timestamp)} INTEGER PRIMARY KEY,
+                    {nameof(TbWeatherTemperature.Temperature)} REAL NOT NULL
+                )");
+                using (var trn = db.BeginTransaction())
+                {
+#pragma warning disable 612
+                    foreach (var kvp in Settings.Temperatures)
+                        db.Insert(new TbWeatherTemperature { Timestamp = kvp.Key.ToDbDateTime(), Temperature = (double) kvp.Value }, trn);
+                    trn.Commit();
+#pragma warning restore 612
+                }
+                return true;
+            }
+
             return false;
         }
     }
 
     class WeatherSettings
     {
-        public Dictionary<DateTime, decimal> Temperatures = new Dictionary<DateTime, decimal>();
         public double Longitude = 0; // Longitude in degrees, east is positive
         public double Latitude = 0; // Latitude in degrees, north is positive
+
+        [Obsolete]
+        public Dictionary<DateTime, decimal> Temperatures = new Dictionary<DateTime, decimal>();
     }
 
     class WeatherDto : IServiceDto
@@ -162,5 +191,12 @@ namespace StatusScreenSite.Services
         public string SolarNoonTime { get; set; }
         public string SunsetTime { get; set; }
         public string SunsetDeltaTime { get; set; }
+    }
+
+    class TbWeatherTemperature
+    {
+        [ExplicitKey]
+        public long Timestamp { get; set; }
+        public double Temperature { get; set; }
     }
 }

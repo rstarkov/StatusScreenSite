@@ -34,6 +34,6 @@ namespace StatusScreenSite
         }
 
         public static long ToDbDateTime(this DateTime dt) => (long) (dt.ToUniversalTime() - _unixepoch).TotalMilliseconds;
-        public static long? ToDbDateTime(this DateTime? dt) => dt?.ToDbDateTime() ?? null;
+        public static DateTime FromDbDateTime(this long dt) => _unixepoch.AddMilliseconds(dt);
     }
 }
