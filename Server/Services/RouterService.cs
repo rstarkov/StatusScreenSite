@@ -96,9 +96,6 @@ namespace StatusScreenSite.Services
                 while (_history.Peek().Timestamp < DateTime.UtcNow.AddHours(-24))
                     _history.Dequeue();
 
-                using (var db = Db.Open())
-                    db.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal });
-
                 if (ptPrev != null)
                 {
                     while (pt.TxTotal < ptPrev.TxTotal)
@@ -108,6 +105,9 @@ namespace StatusScreenSite.Services
                     var txDiff = pt.TxTotal - ptPrev.TxTotal;
                     var rxDiff = pt.RxTotal - ptPrev.RxTotal;
                     var timeDiff = (pt.Timestamp - ptPrev.Timestamp).TotalSeconds;
+
+                    using (var db = Db.Open())
+                        db.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal });
 
                     var rxRate = rxDiff / timeDiff;
                     var txRate = txDiff / timeDiff;
