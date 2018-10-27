@@ -170,14 +170,6 @@ namespace StatusScreenSite.Services
                     {nameof(TbRouterHistoryEntry.TxTotal)} BIGINT NOT NULL,
                     {nameof(TbRouterHistoryEntry.RxTotal)} BIGINT NOT NULL
                 )");
-                using (var trn = db.BeginTransaction())
-                {
-#pragma warning disable 612
-                    foreach (var pt in Settings.History)
-                        db.Insert(new TbRouterHistoryEntry { Timestamp = pt.Timestamp.ToDbDateTime(), TxTotal = pt.TxTotal, RxTotal = pt.RxTotal }, trn);
-                    trn.Commit();
-#pragma warning restore 612
-                }
                 return true;
             }
 
@@ -192,9 +184,6 @@ namespace StatusScreenSite.Services
         public double AverageDecay = 0.90;
         public double AverageDecayFast = 0.50;
         public string LoginAuth = "base64(user:pass)";
-
-        [Obsolete]
-        public Queue<RouterHistoryPoint> History = new Queue<RouterHistoryPoint>();
     }
 
     class RouterHistoryPoint

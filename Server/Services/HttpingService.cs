@@ -184,23 +184,6 @@ namespace StatusScreenSite.Services
                     PRIMARY KEY (SiteId, StartTimestamp, IntervalLength)
                 )");
 
-#pragma warning disable 612
-                foreach (var tgt in Settings.Targets)
-                    using (var trn = db.BeginTransaction())
-                    {
-                        var siteId = db.Insert(new TbHttpingSite { InternalName = tgt.InternalName });
-                        foreach (var recent in tgt.Recent)
-                            db.Insert(new TbHttpingRecent { SiteId = siteId, Timestamp = ((long) recent.Timestamp) * 1000, MsResponse = recent.MsResponse }, trn);
-                        var intervals = tgt.Twominutely.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.TwoMinutes, d)).AsEnumerable();
-                        intervals = intervals.Concat(tgt.Hourly.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.Hour, d)));
-                        intervals = intervals.Concat(tgt.Daily.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.Day, d)));
-                        intervals = intervals.Concat(tgt.Monthly.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.Month, d)));
-                        foreach (var interval in intervals)
-                            db.Insert(interval, trn);
-                        trn.Commit();
-                    }
-#pragma warning restore 612
-
                 return true;
             }
 
@@ -223,17 +206,6 @@ namespace StatusScreenSite.Services
         public string TimeZone = "GMT Standard Time";
 
         public override string ToString() => $"{Name} ({Url})";
-
-        [Obsolete]
-        public QueueViewable<HttpingPoint> Recent = new QueueViewable<HttpingPoint>(); // must hold a month's worth in order to compute monthly percentiles
-        [Obsolete]
-        public QueueViewable<HttpingPointInterval> Twominutely = new QueueViewable<HttpingPointInterval>();
-        [Obsolete]
-        public QueueViewable<HttpingPointInterval> Hourly = new QueueViewable<HttpingPointInterval>();
-        [Obsolete]
-        public QueueViewable<HttpingPointInterval> Daily = new QueueViewable<HttpingPointInterval>();
-        [Obsolete]
-        public QueueViewable<HttpingPointInterval> Monthly = new QueueViewable<HttpingPointInterval>();
     }
 
     class HttpingTarget

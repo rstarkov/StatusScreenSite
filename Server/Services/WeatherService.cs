@@ -150,14 +150,6 @@ namespace StatusScreenSite.Services
                     {nameof(TbWeatherTemperature.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbWeatherTemperature.Temperature)} REAL NOT NULL
                 )");
-                using (var trn = db.BeginTransaction())
-                {
-#pragma warning disable 612
-                    foreach (var kvp in Settings.Temperatures)
-                        db.Insert(new TbWeatherTemperature { Timestamp = kvp.Key.ToDbDateTime(), Temperature = (double) kvp.Value }, trn);
-                    trn.Commit();
-#pragma warning restore 612
-                }
                 return true;
             }
 
@@ -169,9 +161,6 @@ namespace StatusScreenSite.Services
     {
         public double Longitude = 0; // Longitude in degrees, east is positive
         public double Latitude = 0; // Latitude in degrees, north is positive
-
-        [Obsolete]
-        public Dictionary<DateTime, decimal> Temperatures = new Dictionary<DateTime, decimal>();
     }
 
     class WeatherDto : IServiceDto
