@@ -285,10 +285,10 @@ namespace StatusScreenSite.Services
                     SELECT *
                     FROM {nameof(TbHttpingInterval)}
                     WHERE {nameof(TbHttpingInterval.SiteId)} = @siteId AND {nameof(TbHttpingInterval.IntervalLength)} = @length
-                    ORDER BY {nameof(TbHttpingInterval.StartTimestamp)}
+                    ORDER BY {nameof(TbHttpingInterval.StartTimestamp)} DESC
                     LIMIT 500",
                     new { siteId = _siteId, length })
-                .Select(r => new HttpingPointInterval(r)));
+                .Select(r => new HttpingPointInterval(r)).Reverse());
         }
 
         private void thread()
