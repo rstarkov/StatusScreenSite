@@ -189,6 +189,47 @@ namespace StatusScreenSite.Services
 
             return false;
         }
+
+        private static void mergeRecentFromAnotherDb(string otherDbPath)
+        {
+            using (var db = Db.Open())
+            using (var dbOther = new SQLiteConnection($"Data Source={otherDbPath};Version=3;").OpenAndReturn())
+            {
+                var sitesTheirs = dbOther.Query<TbHttpingSite>($"SELECT * FROM {nameof(TbHttpingSite)} WHERE {nameof(TbHttpingSite.SiteId)} IN (SELECT DISTINCT {nameof(TbHttpingRecent.SiteId)} FROM {nameof(TbHttpingRecent)})")
+                    .ToDictionary(s => s.SiteId, s => s.InternalName);
+                var sitesOurs = db.GetAll<TbHttpingSite>().ToDictionary(s => s.InternalName, s => s.SiteId);
+                var sites = sitesTheirs.Select(th => new { theirSiteId = th.Key, ourSiteId = sitesOurs[th.Value] }).ToList();
+
+                foreach (var s in sites)
+                {
+                    Console.WriteLine($"Loading data for site {s.ourSiteId}...");
+
+                    var ours = db.Query<TbHttpingRecent>($"SELECT * FROM {nameof(TbHttpingRecent)} WHERE {nameof(TbHttpingRecent.SiteId)} = @siteId", new { siteId = s.ourSiteId }).ToDictionary(x => x.Timestamp, x => x.MsResponse);
+                    var theirs = dbOther.Query<TbHttpingRecent>($"SELECT * FROM {nameof(TbHttpingRecent)} WHERE {nameof(TbHttpingRecent.SiteId)} = @siteId", new { siteId = s.theirSiteId }).ToDictionary(x => x.Timestamp, x => x.MsResponse);
+
+                    Console.WriteLine($"Comparing and inserting missing records...");
+                    using (var trn = db.BeginTransaction())
+                    {
+                        int inserted = 0;
+                        foreach (var ts in theirs.Keys)
+                        {
+                            if (ours.ContainsKey(ts))
+                            {
+                                if (theirs[ts] != ours[ts])
+                                    Console.WriteLine($"Difference found: {s.ourSiteId} at {ts.FromDbDateTime()}: {theirs[ts]} != {ours[ts]}");
+                            }
+                            else
+                            {
+                                db.Insert(new TbHttpingRecent { SiteId = s.ourSiteId, Timestamp = ts, MsResponse = theirs[ts] }, trn);
+                                inserted++;
+                            }
+                        }
+                        Console.WriteLine($"Inserted {inserted:#,0} records for site ID {s.ourSiteId}");
+                        trn.Commit();
+                    }
+                }
+            }
+        }
     }
 
     class HttpingSettings
