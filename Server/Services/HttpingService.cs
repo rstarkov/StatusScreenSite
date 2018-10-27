@@ -5,10 +5,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
+using Dapper;
+using Dapper.Contrib.Extensions;
 using RT.Util;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
-using RT.Util.Serialization;
 
 namespace StatusScreenSite.Services
 {
@@ -17,6 +18,7 @@ namespace StatusScreenSite.Services
         public override string ServiceName => "HttpingService";
 
         private PingService _pingSvc;
+        private List<HttpingTarget> _targets;
 
         public HttpingService(Server server, HttpingSettings serviceSettings, PingService pingSvc)
             : base(server, serviceSettings)
@@ -26,7 +28,8 @@ namespace StatusScreenSite.Services
 
         public override void Start()
         {
-            foreach (var tgt in Settings.Targets)
+            _targets = Settings.Targets.Select(ts => new HttpingTarget { Settings = ts }).ToList();
+            foreach (var tgt in _targets)
                 tgt.Start(this);
             new Thread(thread) { IsBackground = true }.Start();
         }
@@ -39,9 +42,9 @@ namespace StatusScreenSite.Services
                 try
                 {
                     var dto = new HttpingDto();
-                    dto.Targets = new HttpingTargetDto[Settings.Targets.Count];
+                    dto.Targets = new HttpingTargetDto[_targets.Count];
                     int i = 0;
-                    foreach (var tgt in Settings.Targets)
+                    foreach (var tgt in _targets)
                     {
                         lock (tgt.Lock)
                         {
@@ -73,7 +76,7 @@ namespace StatusScreenSite.Services
 
                             var tgtdto = new HttpingTargetDto
                             {
-                                Name = tgt.Name,
+                                Name = tgt.Settings.Name,
                                 Twominutely = GetIntervalDto(tgt.Twominutely, TimeSpan.FromMinutes(2), tgt.GetStartOfTwominute),
                                 Hourly = GetIntervalDto(tgt.Hourly, TimeSpan.FromHours(1), tgt.GetStartOfHour),
                                 Daily = GetIntervalDto(tgt.Daily, TimeSpan.FromHours(24), tgt.GetStartOfLocalDayInUtc),
@@ -148,22 +151,94 @@ namespace StatusScreenSite.Services
 
         public override bool MigrateSchema(SQLiteConnection db, int curVersion)
         {
+            if (curVersion == 0)
+            {
+                db.Execute(@"CREATE TABLE TbHttpingSite (
+                    SiteId INTEGER PRIMARY KEY,
+                    InternalName TEXT NOT NULL
+                )");
+
+                db.Execute(@"CREATE TABLE TbHttpingRecent (
+                    SiteId BIGINT NOT NULL,
+                    Timestamp BIGINT NOT NULL,
+                    MsResponse INT NOT NULL,
+                    PRIMARY KEY (SiteId, Timestamp)
+                )");
+
+                db.Execute(@"CREATE TABLE TbHttpingInterval (
+                    SiteId BIGINT NOT NULL,
+                    StartTimestamp BIGINT NOT NULL,
+                    IntervalLength INT NOT NULL,
+
+                    TotalCount INT NOT NULL,
+                    TimeoutCount INT NOT NULL,
+                    ErrorCount INT NOT NULL,
+
+                    MsResponsePrc01 INT NOT NULL,
+                    MsResponsePrc25 INT NOT NULL,
+                    MsResponsePrc50 INT NOT NULL,
+                    MsResponsePrc75 INT NOT NULL,
+                    MsResponsePrc95 INT NOT NULL,
+                    MsResponsePrc99 INT NOT NULL,
+
+                    PRIMARY KEY (SiteId, StartTimestamp, IntervalLength)
+                )");
+
+#pragma warning disable 612
+                foreach (var tgt in Settings.Targets)
+                    using (var trn = db.BeginTransaction())
+                    {
+                        var siteId = db.Insert(new TbHttpingSite { InternalName = tgt.InternalName });
+                        foreach (var recent in tgt.Recent)
+                            db.Insert(new TbHttpingRecent { SiteId = siteId, Timestamp = ((long) recent.Timestamp) * 1000, MsResponse = recent.MsResponse }, trn);
+                        var intervals = tgt.Twominutely.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.TwoMinutes, d)).AsEnumerable();
+                        intervals = intervals.Concat(tgt.Hourly.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.Hour, d)));
+                        intervals = intervals.Concat(tgt.Daily.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.Day, d)));
+                        intervals = intervals.Concat(tgt.Monthly.Select(d => new TbHttpingInterval(siteId, HttpingIntervalLength.Month, d)));
+                        foreach (var interval in intervals)
+                            db.Insert(interval, trn);
+                        trn.Commit();
+                    }
+#pragma warning restore 612
+
+                return true;
+            }
+
             return false;
         }
     }
 
     class HttpingSettings
     {
-        public List<HttpingTarget> Targets = new List<HttpingTarget> { new HttpingTarget() };
+        public List<HttpingTargetSettings> Targets = new List<HttpingTargetSettings> { new HttpingTargetSettings() };
     }
 
-    class HttpingTarget
+    class HttpingTargetSettings
     {
-        public string Name = "Google";
+        public string Name = "Google"; // displayed
+        public string InternalName = "Google"; // stored in db
         public string Url = "https://www.google.com";
         public TimeSpan Interval = TimeSpan.FromSeconds(5);
         public string MustContain = "";
         public string TimeZone = "GMT Standard Time";
+
+        public override string ToString() => $"{Name} ({Url})";
+
+        [Obsolete]
+        public QueueViewable<HttpingPoint> Recent = new QueueViewable<HttpingPoint>(); // must hold a month's worth in order to compute monthly percentiles
+        [Obsolete]
+        public QueueViewable<HttpingPointInterval> Twominutely = new QueueViewable<HttpingPointInterval>();
+        [Obsolete]
+        public QueueViewable<HttpingPointInterval> Hourly = new QueueViewable<HttpingPointInterval>();
+        [Obsolete]
+        public QueueViewable<HttpingPointInterval> Daily = new QueueViewable<HttpingPointInterval>();
+        [Obsolete]
+        public QueueViewable<HttpingPointInterval> Monthly = new QueueViewable<HttpingPointInterval>();
+    }
+
+    class HttpingTarget
+    {
+        public HttpingTargetSettings Settings;
 
         public QueueViewable<HttpingPoint> Recent = new QueueViewable<HttpingPoint>(); // must hold a month's worth in order to compute monthly percentiles
         public QueueViewable<HttpingPointInterval> Twominutely = new QueueViewable<HttpingPointInterval>();
@@ -171,31 +246,60 @@ namespace StatusScreenSite.Services
         public QueueViewable<HttpingPointInterval> Daily = new QueueViewable<HttpingPointInterval>();
         public QueueViewable<HttpingPointInterval> Monthly = new QueueViewable<HttpingPointInterval>();
 
-        [ClassifyIgnore]
+        private long _siteId;
         private TimeZoneInfo _timezone;
-        [ClassifyIgnore]
         public object Lock = new object();
-        [ClassifyIgnore]
         private HttpingService _svc;
 
-        public override string ToString() => $"{Name} ({Url}) : {Recent.Count:#,0} recent, {Twominutely.Count:#,0} twomin, {Hourly.Count:#,0} hourly, {Daily.Count:#,0} daily, {Monthly.Count:#,0} monthly";
+        public override string ToString() => $"{Settings.Name} ({Settings.Url}) : {Recent.Count:#,0} recent, {Twominutely.Count:#,0} twomin, {Hourly.Count:#,0} hourly, {Daily.Count:#,0} daily, {Monthly.Count:#,0} monthly";
 
         public void Start(HttpingService svc)
         {
             _svc = svc;
-            _timezone = TimeZoneInfo.FindSystemTimeZoneById(TimeZone);
+            _timezone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
+
+            using (var db = Db.Open())
+            {
+                _siteId = db.Query<TbHttpingSite>($"SELECT * FROM {nameof(TbHttpingSite)} WHERE {nameof(TbHttpingSite.InternalName)} = @name", new { name = Settings.InternalName }).SingleOrDefault()?.SiteId
+                    ?? db.Insert(new TbHttpingSite { InternalName = Settings.InternalName });
+
+                Recent = new QueueViewable<HttpingPoint>(db.Query<TbHttpingRecent>($@"
+                        SELECT *
+                        FROM {nameof(TbHttpingRecent)}
+                        WHERE {nameof(TbHttpingRecent.SiteId)} = @siteId AND {nameof(TbHttpingRecent.Timestamp)} >= @limit
+                        ORDER BY {nameof(TbHttpingRecent.Timestamp)}",
+                        new { siteId = _siteId, limit = DateTime.UtcNow.AddDays(-35).ToDbDateTime() })
+                    .Select(r => new HttpingPoint(r)));
+                Twominutely = loadRecentIntervals(db, HttpingIntervalLength.TwoMinutes);
+                Hourly = loadRecentIntervals(db, HttpingIntervalLength.Hour);
+                Daily = loadRecentIntervals(db, HttpingIntervalLength.Day);
+                Monthly = loadRecentIntervals(db, HttpingIntervalLength.Month);
+            }
+
             new Thread(thread) { IsBackground = true }.Start();
+        }
+
+        private QueueViewable<HttpingPointInterval> loadRecentIntervals(SQLiteConnection db, HttpingIntervalLength length)
+        {
+            return new QueueViewable<HttpingPointInterval>(db.Query<TbHttpingInterval>($@"
+                    SELECT *
+                    FROM {nameof(TbHttpingInterval)}
+                    WHERE {nameof(TbHttpingInterval.SiteId)} = @siteId AND {nameof(TbHttpingInterval.IntervalLength)} = @length
+                    ORDER BY {nameof(TbHttpingInterval.StartTimestamp)}
+                    LIMIT 500",
+                    new { siteId = _siteId, length })
+                .Select(r => new HttpingPointInterval(r)));
         }
 
         private void thread()
         {
             while (true)
             {
-                var next = DateTime.UtcNow + Interval;
+                var next = DateTime.UtcNow + Settings.Interval;
                 try
                 {
                     var hc = new HttpClient();
-                    hc.Timeout = TimeSpan.FromSeconds(Interval.TotalSeconds * 0.90);
+                    hc.Timeout = TimeSpan.FromSeconds(Settings.Interval.TotalSeconds * 0.90);
 
                     double msResponse = -1;
                     bool error = false;
@@ -205,10 +309,10 @@ namespace StatusScreenSite.Services
                     {
                         if (!_svc.IsGoodInternetConnection())
                             goto skip;
-                        var response = hc.GetAsync(Url).GetAwaiter().GetResult();
+                        var response = hc.GetAsync(Settings.Url).GetAwaiter().GetResult();
                         var bytes = response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
                         msResponse = (DateTime.UtcNow - start).TotalMilliseconds;
-                        if (response.StatusCode == System.Net.HttpStatusCode.OK && Encoding.UTF8.GetString(bytes).Contains(MustContain))
+                        if (response.StatusCode == System.Net.HttpStatusCode.OK && Encoding.UTF8.GetString(bytes).Contains(Settings.MustContain))
                             ok = true;
                         if (!_svc.IsGoodInternetConnection())
                             goto skip;
@@ -229,6 +333,8 @@ namespace StatusScreenSite.Services
                         else
                             pt.MsResponse = (ushort) ((int) Math.Round(msResponse)).Clip(1, 65534);
                         Recent.Enqueue(pt);
+                        using (var db = Db.Open())
+                            db.Insert(new TbHttpingRecent { SiteId = _siteId, Timestamp = start.ToDbDateTime(), MsResponse = pt.MsResponse });
                         // Maintain the last 35 days in order to calculate monthly percentiles precisely
                         var cutoff = DateTime.UtcNow.AddDays(-35).ToUnixSeconds();
                         while (Recent.Count > 0 && Recent[0].Timestamp < cutoff)
@@ -238,10 +344,10 @@ namespace StatusScreenSite.Services
                         var prevPt = Recent.Count >= 2 ? Recent[Recent.Count - 2].Timestamp.FromUnixSeconds() : (DateTime?) null;
                         if (prevPt != null && prevPt.Value.TruncatedToMinutes() != start.TruncatedToMinutes())
                         {
-                            AddIntervalIfRequired(Twominutely, prevPt.Value, start, GetStartOfTwominute);
-                            AddIntervalIfRequired(Hourly, prevPt.Value, start, GetStartOfHour);
-                            AddIntervalIfRequired(Daily, prevPt.Value, start, GetStartOfLocalDayInUtc);
-                            AddIntervalIfRequired(Monthly, prevPt.Value, start, GetStartOfLocalMonthInUtc);
+                            AddIntervalIfRequired(Twominutely, prevPt.Value, start, GetStartOfTwominute, HttpingIntervalLength.TwoMinutes);
+                            AddIntervalIfRequired(Hourly, prevPt.Value, start, GetStartOfHour, HttpingIntervalLength.Hour);
+                            AddIntervalIfRequired(Daily, prevPt.Value, start, GetStartOfLocalDayInUtc, HttpingIntervalLength.Day);
+                            AddIntervalIfRequired(Monthly, prevPt.Value, start, GetStartOfLocalMonthInUtc, HttpingIntervalLength.Month);
                         }
 
                         // Maintain the last 500 entries of each of these; monthly records are maintained forever
@@ -283,12 +389,17 @@ namespace StatusScreenSite.Services
             return dt;
         }
 
-        private void AddIntervalIfRequired(QueueViewable<HttpingPointInterval> queue, DateTime dtPrevUtc, DateTime dtCurUtc, Func<DateTime, DateTime> getIntervalStart)
+        private void AddIntervalIfRequired(QueueViewable<HttpingPointInterval> queue, DateTime dtPrevUtc, DateTime dtCurUtc, Func<DateTime, DateTime> getIntervalStart, HttpingIntervalLength length)
         {
             var startPrevUtc = getIntervalStart(dtPrevUtc);
             var startCurUtc = getIntervalStart(dtCurUtc);
             if (startPrevUtc != startCurUtc)
-                queue.Enqueue(ComputeStat(startPrevUtc, startCurUtc));
+            {
+                var stat = ComputeStat(startPrevUtc, startCurUtc);
+                queue.Enqueue(stat);
+                using (var db = Db.Open())
+                    db.Insert(new TbHttpingInterval(_siteId, length, stat));
+            }
         }
 
         private HttpingPointInterval ComputeStat(DateTime startPrevUtc, DateTime startCurUtc)
@@ -332,6 +443,12 @@ namespace StatusScreenSite.Services
         public uint Timestamp; // seconds since 1970-01-01 00:00:00 UTC
         public ushort MsResponse; // 65535 = timeout; 0 = error (wrong status code or expected text missing)
 
+        public HttpingPoint(TbHttpingRecent r) : this()
+        {
+            Timestamp = (uint) (r.Timestamp / 1000);
+            MsResponse = (ushort) r.MsResponse;
+        }
+
         public override string ToString() => $"{Timestamp.FromUnixSeconds()} : {MsResponse:#,0} ms";
     }
 
@@ -354,6 +471,20 @@ namespace StatusScreenSite.Services
         public int TotalCount;
         public int TimeoutCount;
         public int ErrorCount;
+
+        public HttpingPointInterval(TbHttpingInterval r) : this()
+        {
+            StartUtc = r.StartTimestamp.FromDbDateTime();
+            TotalCount = r.TotalCount;
+            TimeoutCount = r.TimeoutCount;
+            ErrorCount = r.ErrorCount;
+            MsResponse.Prc01 = (ushort) r.MsResponsePrc01;
+            MsResponse.Prc25 = (ushort) r.MsResponsePrc25;
+            MsResponse.Prc50 = (ushort) r.MsResponsePrc50;
+            MsResponse.Prc75 = (ushort) r.MsResponsePrc75;
+            MsResponse.Prc95 = (ushort) r.MsResponsePrc95;
+            MsResponse.Prc99 = (ushort) r.MsResponsePrc99;
+        }
 
         public override string ToString() => $"{StartUtc} : {TotalCount:#,0} samples, {TimeoutCount + ErrorCount:#,0} timeouts/errors, {MsResponse}";
 
@@ -425,5 +556,67 @@ namespace StatusScreenSite.Services
         public HttpingIntervalDto Last30m { get; set; }
         public HttpingIntervalDto Last24h { get; set; }
         public HttpingIntervalDto Last30d { get; set; }
+    }
+
+    enum HttpingIntervalLength
+    {
+        TwoMinutes = 1,
+        Hour = 2,
+        Day = 3,
+        Month = 4, // calendar month, midnight 1st to next midnight 1st
+    }
+
+    class TbHttpingSite
+    {
+        [Key]
+        public long SiteId { get; set; }
+        public string InternalName { get; set; }
+    }
+
+    class TbHttpingRecent
+    {
+        public long SiteId { get; set; }
+        public long Timestamp { get; set; }
+        public int MsResponse { get; set; }
+    }
+
+    class TbHttpingInterval
+    {
+        public long SiteId { get; set; }
+        public long StartTimestamp { get; set; }
+        public HttpingIntervalLength IntervalLength { get; set; }
+
+        public int TotalCount { get; set; }
+        public int TimeoutCount { get; set; }
+        public int ErrorCount { get; set; }
+
+        public int MsResponsePrc01 { get; set; } // timeouts and errors are not included
+        public int MsResponsePrc25 { get; set; }
+        public int MsResponsePrc50 { get; set; }
+        public int MsResponsePrc75 { get; set; }
+        public int MsResponsePrc95 { get; set; }
+        public int MsResponsePrc99 { get; set; }
+
+        public TbHttpingInterval() // for Dapper
+        {
+        }
+
+        public TbHttpingInterval(long siteId, HttpingIntervalLength length, HttpingPointInterval stat)
+        {
+            SiteId = siteId;
+            StartTimestamp = stat.StartUtc.ToDbDateTime();
+            IntervalLength = length;
+
+            TotalCount = stat.TotalCount;
+            TimeoutCount = stat.TimeoutCount;
+            ErrorCount = stat.ErrorCount;
+
+            MsResponsePrc01 = stat.MsResponse.Prc01;
+            MsResponsePrc25 = stat.MsResponse.Prc25;
+            MsResponsePrc50 = stat.MsResponse.Prc50;
+            MsResponsePrc75 = stat.MsResponse.Prc75;
+            MsResponsePrc95 = stat.MsResponse.Prc95;
+            MsResponsePrc99 = stat.MsResponse.Prc99;
+        }
     }
 }
