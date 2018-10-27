@@ -155,7 +155,6 @@ namespace StatusScreenSite.Services
                     SendUpdate(dto);
                 }
 
-                SaveSettings();
                 ptPrev = pt;
 
                 Thread.Sleep(TimeSpan.FromSeconds(Settings.QueryInterval));
