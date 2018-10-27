@@ -332,7 +332,10 @@ namespace StatusScreenSite.Services
                 else if (new HttpingPointInterval(existing).ToString() != interval.ToString())
                 {
                     if (existing.TotalCount <= interval.TotalCount)
+                    {
                         Console.WriteLine($"DIFFERENT: {_siteId}, {length}, {interval.StartUtc}: existing {existing.TotalCount} vs recomputed {interval.TotalCount}");
+                        db.Update<TbHttpingInterval>(new TbHttpingInterval(_siteId, length, interval));
+                    }
                 }
             }
         }
@@ -640,8 +643,11 @@ namespace StatusScreenSite.Services
 
     class TbHttpingInterval
     {
+        [ExplicitKey]
         public long SiteId { get; set; }
+        [ExplicitKey]
         public long StartTimestamp { get; set; }
+        [ExplicitKey]
         public HttpingIntervalLength IntervalLength { get; set; }
 
         public int TotalCount { get; set; }
