@@ -292,6 +292,51 @@ namespace StatusScreenSite.Services
             new Thread(thread) { IsBackground = true }.Start();
         }
 
+        private void recomputePercentiles()
+        {
+            using (var db = Db.Open())
+            {
+                Console.WriteLine($"Recomputing percentiles for site {_siteId}: loading data...");
+                var allrecent = db.Query<TbHttpingRecent>($@"
+                        SELECT *
+                        FROM {nameof(TbHttpingRecent)}
+                        WHERE {nameof(TbHttpingRecent.SiteId)} = @siteId
+                        ORDER BY {nameof(TbHttpingRecent.Timestamp)}",
+                        new { siteId = _siteId })
+                    .Select(r => new HttpingPoint(r)).ToList();
+                Console.WriteLine($"Loaded {allrecent.Count:#,0} datapoints. Comparing...");
+                recomputePercentilesSingle(db, allrecent, GetStartOfTwominute, HttpingIntervalLength.TwoMinutes);
+                recomputePercentilesSingle(db, allrecent, GetStartOfHour, HttpingIntervalLength.Hour);
+                recomputePercentilesSingle(db, allrecent, GetStartOfLocalDayInUtc, HttpingIntervalLength.Day);
+                recomputePercentilesSingle(db, allrecent, GetStartOfLocalMonthInUtc, HttpingIntervalLength.Month);
+                Console.WriteLine($"Done.");
+            }
+        }
+
+        private void recomputePercentilesSingle(SQLiteConnection db, IEnumerable<HttpingPoint> points, Func<DateTime, DateTime> getStart, HttpingIntervalLength length)
+        {
+            foreach (var grp in points.GroupBy(pt => getStart(pt.Timestamp.FromUnixSeconds())).OrderBy(g => g.Key).Skip(1).SkipLast(1))
+            {
+                var interval = new HttpingPointInterval { StartUtc = grp.Key };
+                var good = grp.Select(g => g.MsResponse).Where(ms => ms != 0 && ms != 65535).Order().ToList();
+                if (good.Count > 0)
+                    SetPercentiles(ref interval.MsResponse, good);
+                foreach (var sample in grp)
+                    interval.CountSample(sample.MsResponse);
+                var existing = db.Query<TbHttpingInterval>("SELECT * FROM TbHttpingInterval WHERE SiteId = @siteId AND StartTimestamp = @start AND IntervalLength = @length", new { siteId = _siteId, start = grp.Key.ToDbDateTime(), length }).SingleOrDefault();
+                if (existing == null)
+                {
+                    Console.WriteLine($"MISSING: {_siteId}, {length}, {interval}");
+                    db.Insert(new TbHttpingInterval(_siteId, length, interval));
+                }
+                else if (new HttpingPointInterval(existing).ToString() != interval.ToString())
+                {
+                    if (existing.TotalCount <= interval.TotalCount)
+                        Console.WriteLine($"DIFFERENT: {_siteId}, {length}, {interval.StartUtc}: existing {existing.TotalCount} vs recomputed {interval.TotalCount}");
+                }
+            }
+        }
+
         private QueueViewable<HttpingPointInterval> loadRecentIntervals(SQLiteConnection db, HttpingIntervalLength length)
         {
             return new QueueViewable<HttpingPointInterval>(db.Query<TbHttpingInterval>($@"
