@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Dapper;
 using Dapper.Contrib.Extensions;
+using RT.Servers;
 using RT.Util;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
@@ -24,6 +25,7 @@ namespace StatusScreenSite.Services
             : base(server, serviceSettings)
         {
             _pingSvc = pingSvc;
+            server.AddUrlMapping(new UrlMapping(new UrlHook(path: "/HttpingService/ChartSvg", specificPath: true), handleChartSvg));
         }
 
         public override void Start()
@@ -228,6 +230,116 @@ namespace StatusScreenSite.Services
                         trn.Commit();
                     }
                 }
+            }
+        }
+
+        private HttpResponse handleChartSvg(HttpRequest request)
+        {
+            var siteName = request.Url["server"] ?? throw new HttpNotFoundException();
+            var interval = EnumStrong.Parse<HttpingIntervalLength>(request.Url["interval"]);
+            var tsFrom = long.Parse(request.Url["from"]);
+            var tsTo = long.Parse(request.Url["to"]);
+            var maxOverride = request.Url["max"] == null ? (int?) null : int.Parse(request.Url["max"]);
+            var logY = request.Url["log"] == "1";
+            var percentiles = request.Url.QueryValues("prc").ToHashSet(); // if none: plot uptime instead
+            var barH = request.Url["barH"] == null ? 80.0 : double.Parse(request.Url["barH"]);
+
+            var barW = 10.0;
+            var barGap = 2.0;
+            var margin = 10.0;
+
+            var clrGreenBar = "#08b025";
+            var clrGreenDarkBar = "#057519";
+            var clrYellowBar = "#ffff00";
+            var clrBlueBar = "#1985f3";
+            var clrBlueDarkBar = "#0959aa";
+            var clrRedBar = "#ff0000";
+            var clrFuchsiaBar = "#ff00ff";
+            var clrGreyBar = "#404040";
+
+            using (var db = Db.Open())
+            {
+                var site = db.QuerySingle<TbHttpingSite>($"SELECT * FROM {nameof(TbHttpingSite)} WHERE {nameof(TbHttpingSite.InternalName)} = @siteName", new { siteName }) ?? throw new HttpNotFoundException();
+                var tgt = _targets.Single(t => t.Settings.InternalName == siteName);
+                var points = db.Query<TbHttpingInterval>($@"
+                    SELECT * FROM {nameof(TbHttpingInterval)}
+                    WHERE {nameof(TbHttpingInterval.SiteId)} = @SiteId
+                        AND {nameof(TbHttpingInterval.IntervalLength)} = @interval
+                        AND {nameof(TbHttpingInterval.StartTimestamp)} >= @tsFrom
+                        AND {nameof(TbHttpingInterval.StartTimestamp)} < @tsTo
+                    ORDER BY {nameof(TbHttpingInterval.StartTimestamp)}
+                    ",
+                    new { site.SiteId, interval, tsFrom, tsTo }).ToList();
+
+                var intervalIncrement = interval == HttpingIntervalLength.TwoMinutes ? TimeSpan.FromMinutes(2) : interval == HttpingIntervalLength.Hour ? TimeSpan.FromHours(1)
+                    : interval == HttpingIntervalLength.Day ? TimeSpan.FromHours(24 + 4 /* for DST changes */) : interval == HttpingIntervalLength.Month ? TimeSpan.FromDays(35) : throw new Exception();
+                var startOfInterval = interval == HttpingIntervalLength.TwoMinutes ? tgt.GetStartOfTwominute : interval == HttpingIntervalLength.Hour ? tgt.GetStartOfHour
+                    : interval == HttpingIntervalLength.Day ? tgt.GetStartOfLocalDayInUtc : interval == HttpingIntervalLength.Month ? (Func<DateTime, DateTime>) tgt.GetStartOfLocalMonthInUtc : throw new Exception();
+                var max = maxOverride ?? points.Max(pt => pt.MsResponsePrc50);
+                double curX = margin;
+                var curInterval = points[0].StartTimestamp.FromDbDateTime();
+                var lastInterval = points[points.Count - 1].StartTimestamp.FromDbDateTime();
+
+                var sb = new StringBuilder();
+                void addBar(double yBot, double yTop, string color)
+                {
+                    if (yTop <= 0 || yBot > max)
+                        return;
+                    if (yBot < 0) yBot = 0;
+                    if (yTop > max) yTop = max;
+                    sb.Append($"<rect x='{curX}' y='{margin + barH - yTop / max * barH}' width='{barW}' height='{(yTop - yBot) / max * barH}' stroke-width='0' fill='{color}'></rect>");
+                }
+
+                int p = 0;
+                for (; curInterval <= lastInterval; curInterval = startOfInterval(curInterval + intervalIncrement))
+                {
+                    var pt = points[p];
+                    if (pt.StartTimestamp.FromDbDateTime() != curInterval)
+                    {
+                        addBar(0, max, clrGreyBar);
+                    }
+                    else
+                    {
+                        if (percentiles.Count == 0)
+                        {
+                            addBar(0, 1, pt.TimeoutCount + pt.ErrorCount == 0 ? clrGreenBar : clrGreenDarkBar);
+                            addBar(0, (pt.TimeoutCount + pt.ErrorCount) / (double) pt.TotalCount, clrYellowBar);
+                            addBar(0, pt.TimeoutCount / (double) pt.TotalCount, clrRedBar);
+                        }
+                        else
+                        {
+                            if (pt.TotalCount - pt.ErrorCount - pt.TimeoutCount == 0)
+                            {
+                                addBar(0, max, clrFuchsiaBar);
+                            }
+                            else
+                            {
+                                if (percentiles.Contains("99"))
+                                    addBar(0, pt.MsResponsePrc99, clrBlueDarkBar);
+                                if (percentiles.Contains("95"))
+                                    addBar(0, pt.MsResponsePrc95, clrBlueBar);
+                                if (percentiles.Contains("75"))
+                                    addBar(0, pt.MsResponsePrc75, clrRedBar);
+                                if (percentiles.Contains("50"))
+                                    addBar(0, pt.MsResponsePrc50, clrYellowBar);
+                                if (percentiles.Contains("25"))
+                                    addBar(0, pt.MsResponsePrc25, clrGreenDarkBar);
+                                if (percentiles.Contains("01"))
+                                    addBar(0, pt.MsResponsePrc01, clrGreenBar);
+                            }
+                        }
+                        p++;
+                    }
+
+                    curX += barW + barGap;
+                }
+                curX = curX - barGap + margin;
+
+                return HttpResponse.Create(Ut.NewArray(
+                    $"<svg width='{curX}' height='{margin + barH + margin}' style='border: 1px solid #999; background: #000;' xmlns='http://www.w3.org/2000/svg'><g>",
+                    sb.ToString(),
+                    "</g></svg>"
+                ), "image/svg+xml");
             }
         }
     }
