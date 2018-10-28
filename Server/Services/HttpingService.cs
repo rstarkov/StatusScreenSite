@@ -243,9 +243,9 @@ namespace StatusScreenSite.Services
             var logY = request.Url["log"] == "1";
             var percentiles = request.Url.QueryValues("prc").ToHashSet(); // if none: plot uptime instead
             var barH = request.Url["barH"] == null ? 80.0 : double.Parse(request.Url["barH"]);
+            var barW = request.Url["barW"] == null ? 10.0 : double.Parse(request.Url["barW"]);
+            var barGap = barW * (request.Url["barGap"] == null ? 0.2 : double.Parse(request.Url["barGap"]));
 
-            var barW = 10.0;
-            var barGap = 2.0;
             var margin = 10.0;
 
             var clrGreenBar = "#08b025";
