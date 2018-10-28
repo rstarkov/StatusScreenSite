@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -97,6 +97,11 @@ namespace StatusScreenSite
         public void SaveSettings()
         {
             _settings.SaveQuiet();
+        }
+
+        public void AddUrlMapping(UrlMapping mapping)
+        {
+            _resolver.Add(mapping);
         }
 
         private HttpResponse handleIndex(HttpRequest req)
