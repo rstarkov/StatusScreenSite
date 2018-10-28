@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -32,6 +32,7 @@ namespace StatusScreenSite
                 throw new InvalidOperationException();
             _isRunning = true;
 
+            Console.WriteLine("Starting server...");
             var server = new HttpServer(_settings.HttpOptions);
 
             _resolver = new UrlResolver();
@@ -50,11 +51,15 @@ namespace StatusScreenSite
             _services.Add(new HttpingService(this, _settings.HttpingSettings, _services.OfType<PingService>().Single()));
             _services.Add(new RouterService(this, _settings.RouterSettings));
 
+            Console.WriteLine("Initialising database...");
             var absoluteDbPath = Path.Combine(Path.GetDirectoryName(SettingsUtil.GetAttribute<Settings>().GetFileName()), _settings.DbFilePath);
             Db.Initialise(absoluteDbPath, _services);
 
             foreach (var svc in _services)
+            {
+                Console.WriteLine($"Initialising {svc.ServiceName}...");
                 svc.Start();
+            }
 
             server.StartListening(blocking: false);
         }
