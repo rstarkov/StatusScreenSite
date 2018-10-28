@@ -245,6 +245,8 @@ namespace StatusScreenSite.Services
             var barH = request.Url["barH"] == null ? 80.0 : double.Parse(request.Url["barH"]);
             var barW = request.Url["barW"] == null ? 10.0 : double.Parse(request.Url["barW"]);
             var barGap = barW * (request.Url["barGap"] == null ? 0.2 : double.Parse(request.Url["barGap"]));
+            var groupGap = barW * (request.Url["groupGap"] == null ? 0.8 : double.Parse(request.Url["groupGap"]));
+            var groupInterval = request.Url["groupInterval"] != null ? EnumStrong.Parse<HttpingIntervalLength>(request.Url["groupInterval"]) : (interval + 1);
 
             var margin = 10.0;
 
@@ -273,8 +275,8 @@ namespace StatusScreenSite.Services
 
                 var intervalIncrement = interval == HttpingIntervalLength.TwoMinutes ? TimeSpan.FromMinutes(2) : interval == HttpingIntervalLength.Hour ? TimeSpan.FromHours(1)
                     : interval == HttpingIntervalLength.Day ? TimeSpan.FromHours(24 + 4 /* for DST changes */) : interval == HttpingIntervalLength.Month ? TimeSpan.FromDays(35) : throw new Exception();
-                var startOfInterval = interval == HttpingIntervalLength.TwoMinutes ? tgt.GetStartOfTwominute : interval == HttpingIntervalLength.Hour ? tgt.GetStartOfHour
-                    : interval == HttpingIntervalLength.Day ? tgt.GetStartOfLocalDayInUtc : interval == HttpingIntervalLength.Month ? (Func<DateTime, DateTime>) tgt.GetStartOfLocalMonthInUtc : throw new Exception();
+                var startOfInterval = tgt.GetStartFunc(interval);
+                var startOfGroup = tgt.GetStartFunc(interval + 1);
                 var max = maxOverride ?? points.Max(pt => pt.MsResponsePrc50);
                 double curX = margin;
                 var curInterval = points[0].StartTimestamp.FromDbDateTime();
@@ -293,6 +295,8 @@ namespace StatusScreenSite.Services
                 int p = 0;
                 for (; curInterval <= lastInterval; curInterval = startOfInterval(curInterval + intervalIncrement))
                 {
+                    if (curInterval == startOfGroup(curInterval))
+                        curX += groupGap;
                     var pt = points[p];
                     if (pt.StartTimestamp.FromDbDateTime() != curInterval)
                     {
@@ -541,6 +545,12 @@ namespace StatusScreenSite.Services
             }
         }
 
+        public Func<DateTime, DateTime> GetStartFunc(HttpingIntervalLength interval) =>
+            interval == HttpingIntervalLength.TwoMinutes ? GetStartOfTwominute :
+            interval == HttpingIntervalLength.Hour ? GetStartOfHour :
+            interval == HttpingIntervalLength.Day ? GetStartOfLocalDayInUtc :
+            interval == HttpingIntervalLength.Month ? GetStartOfLocalMonthInUtc : (Func<DateTime, DateTime>) GetStartOfLocalYearInUtc;
+
         public DateTime GetStartOfTwominute(DateTime dt) => new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, (dt.Minute / 2) * 2, 0, DateTimeKind.Utc);
         public DateTime GetStartOfHour(DateTime dt) => new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, 0, 0, DateTimeKind.Utc);
 
@@ -558,6 +568,15 @@ namespace StatusScreenSite.Services
             var offset = _timezone.GetUtcOffset(dt);
             dt = dt + offset; // specified UTC time as local time
             dt = new DateTime(dt.Year, dt.Month, 1, 0, 0, 0, DateTimeKind.Utc); // start of month in local time - with a UTC kind because we're about to make it UTC
+            dt = dt - offset; // start of local month in UTC time
+            return dt;
+        }
+
+        public DateTime GetStartOfLocalYearInUtc(DateTime dt)
+        {
+            var offset = _timezone.GetUtcOffset(dt);
+            dt = dt + offset; // specified UTC time as local time
+            dt = new DateTime(dt.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc); // start of year in local time - with a UTC kind because we're about to make it UTC
             dt = dt - offset; // start of local month in UTC time
             return dt;
         }
@@ -737,6 +756,7 @@ namespace StatusScreenSite.Services
         Hour = 2,
         Day = 3,
         Month = 4, // calendar month, midnight 1st to next midnight 1st
+        Year = 5, // calendar year
     }
 
     class TbHttpingSite
