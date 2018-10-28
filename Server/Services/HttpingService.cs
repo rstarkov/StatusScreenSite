@@ -246,9 +246,16 @@ namespace StatusScreenSite.Services
             var barW = request.Url["barW"] == null ? 10.0 : double.Parse(request.Url["barW"]);
             var barGap = barW * (request.Url["barGap"] == null ? 0.2 : double.Parse(request.Url["barGap"]));
             var groupGap = barW * (request.Url["groupGap"] == null ? 0.8 : double.Parse(request.Url["groupGap"]));
-            var groupInterval = request.Url["groupInterval"] != null ? EnumStrong.Parse<HttpingIntervalLength>(request.Url["groupInterval"]) : (interval + 1);
+            var groupInterval = request.Url["groupInterval"] == null ? (interval + 1) : EnumStrong.Parse<HttpingIntervalLength>(request.Url["groupInterval"]);
+            var xLabelSize = request.Url["xLabelSize"] == null ? (double?) null : double.Parse(request.Url["xLabelSize"]);
+            var groupLabelSize = request.Url["groupLabelSize"] == null ? (double?) null : double.Parse(request.Url["groupLabelSize"]);
+            var groupBackground = groupGap == 0;
+
+            if (xLabelSize <= 0) xLabelSize = null;
+            if (groupLabelSize <= 0) groupLabelSize = null;
 
             var margin = 10.0;
+            var lineBoxMul = 1.3;
 
             var clrGreenBar = "#08b025";
             var clrGreenDarkBar = "#057519";
@@ -281,8 +288,13 @@ namespace StatusScreenSite.Services
                 double curX = margin;
                 var curInterval = points[0].StartTimestamp.FromDbDateTime();
                 var lastInterval = points[points.Count - 1].StartTimestamp.FromDbDateTime();
+                var xLabelY = margin + barH + (xLabelSize == null ? 0 : (margin / 2 + xLabelSize.Value));
+                var groupLabelY = xLabelY + (groupLabelSize == null ? 0 : (margin / 2 + groupLabelSize.Value));
 
                 var sb = new StringBuilder();
+                var prevGroupStart = curX;
+                var prevGroupInterval = startOfGroup(curInterval);
+
                 void addBar(double yBot, double yTop, string color)
                 {
                     if (yTop <= 0 || yBot > max)
@@ -291,12 +303,45 @@ namespace StatusScreenSite.Services
                     if (yTop > max) yTop = max;
                     sb.Append($"<rect x='{curX}' y='{margin + barH - yTop / max * barH}' width='{barW}' height='{(yTop - yBot) / max * barH}' stroke-width='0' fill='{color}'></rect>");
                 }
+                void addXLabel(double x, bool groupLabel, string text)
+                {
+                    if (string.IsNullOrEmpty(text))
+                        return;
+                    if ((groupLabel && groupLabelSize == null) || (!groupLabel && xLabelSize == null))
+                        return;
+                    var fontSize = (groupLabel ? groupLabelSize : xLabelSize).Value;
+                    var y = groupLabel ? groupLabelY : xLabelY;
+                    var color = groupLabel ? "#eee" : "#bbb";
+                    sb.Append($"<text xml:space='preserve' text-anchor='middle' font-family='Open Sans, Arial, sans-serif' font-size='{fontSize}' x='{x}' y='{y}' fill='{color}'>{text.HtmlEscape()}</text>");
+                }
+                void addGroupLabel()
+                {
+                    string groupLabel = "";
+                    var localStart = TimeZoneInfo.ConvertTimeFromUtc(prevGroupInterval, tgt._timezone);
+                    if (groupInterval == HttpingIntervalLength.Hour)
+                        groupLabel = $"{localStart:HH:mm}";
+                    else if (groupInterval == HttpingIntervalLength.Day)
+                        groupLabel = $"{localStart:ddd dd MMM}";
+                    else if (groupInterval == HttpingIntervalLength.Month)
+                        groupLabel = $"{localStart:MMMM yyyy}";
+                    if (groupBackground)
+                        sb.Append($"<rect x='{prevGroupStart}' y='{groupLabelY - groupLabelSize}' width='{curX - barGap - prevGroupStart}' height='{groupLabelSize * lineBoxMul}' stroke-width='0' fill='#333'></rect>");
+                    addXLabel((prevGroupStart + curX) / 2, true, groupLabel);
+                }
 
                 int p = 0;
                 for (; curInterval <= lastInterval; curInterval = startOfInterval(curInterval + intervalIncrement))
                 {
                     if (curInterval == startOfGroup(curInterval))
-                        curX += groupGap;
+                    {
+                        if (p != 0)
+                        {
+                            addGroupLabel();
+                            curX += groupGap;
+                        }
+                        prevGroupStart = curX;
+                        prevGroupInterval = curInterval;
+                    }
                     var pt = points[p];
                     if (pt.StartTimestamp.FromDbDateTime() != curInterval)
                     {
@@ -335,12 +380,25 @@ namespace StatusScreenSite.Services
                         p++;
                     }
 
+                    string xLabel = "";
+                    if (interval == HttpingIntervalLength.TwoMinutes)
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Minute.ToString("00");
+                    else if (interval == HttpingIntervalLength.Hour)
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Hour.ToString("00");
+                    else if (interval == HttpingIntervalLength.Day)
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Day.ToString();
+                    else if (interval == HttpingIntervalLength.Month)
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Month.ToString("MMM");
+                    addXLabel(curX + barW / 2, false, xLabel);
+
                     curX += barW + barGap;
                 }
-                curX = curX - barGap + margin;
+                addGroupLabel();
 
+                curX = curX - barGap + margin;
+                var height = groupLabelY + (groupBackground && groupLabelSize != null ? (groupLabelSize * (lineBoxMul - 1)) : 0) + margin;
                 return HttpResponse.Create(Ut.NewArray(
-                    $"<svg width='{curX}' height='{margin + barH + margin}' style='border: 1px solid #999; background: #000;' xmlns='http://www.w3.org/2000/svg'><g>",
+                    $"<svg width='{curX}' height='{height}' style='border: 1px solid #999; background: #000;' xmlns='http://www.w3.org/2000/svg'><g>",
                     sb.ToString(),
                     "</g></svg>"
                 ), "image/svg+xml");
@@ -376,7 +434,7 @@ namespace StatusScreenSite.Services
         public QueueViewable<HttpingPointInterval> Monthly = new QueueViewable<HttpingPointInterval>();
 
         private long _siteId;
-        private TimeZoneInfo _timezone;
+        public TimeZoneInfo _timezone;
         public object Lock = new object();
         private HttpingService _svc;
 
