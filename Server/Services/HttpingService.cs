@@ -317,7 +317,7 @@ namespace StatusScreenSite.Services
                 void addGroupLabel()
                 {
                     string groupLabel = "";
-                    var localStart = TimeZoneInfo.ConvertTimeFromUtc(prevGroupInterval, tgt._timezone);
+                    var localStart = TimeZoneInfo.ConvertTimeFromUtc(prevGroupInterval, tgt.Timezone);
                     if (groupInterval == HttpingIntervalLength.Hour)
                         groupLabel = $"{localStart:HH:mm}";
                     else if (groupInterval == HttpingIntervalLength.Day)
@@ -382,13 +382,13 @@ namespace StatusScreenSite.Services
 
                     string xLabel = "";
                     if (interval == HttpingIntervalLength.TwoMinutes)
-                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Minute.ToString("00");
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).Minute.ToString("00");
                     else if (interval == HttpingIntervalLength.Hour)
-                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Hour.ToString("00");
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).Hour.ToString("00");
                     else if (interval == HttpingIntervalLength.Day)
-                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Day.ToString();
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).Day.ToString();
                     else if (interval == HttpingIntervalLength.Month)
-                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt._timezone).Month.ToString("MMM");
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).Month.ToString("MMM");
                     addXLabel(curX + barW / 2, false, xLabel);
 
                     curX += barW + barGap;
@@ -434,7 +434,7 @@ namespace StatusScreenSite.Services
         public QueueViewable<HttpingPointInterval> Monthly = new QueueViewable<HttpingPointInterval>();
 
         private long _siteId;
-        public TimeZoneInfo _timezone;
+        public TimeZoneInfo Timezone;
         public object Lock = new object();
         private HttpingService _svc;
 
@@ -443,7 +443,7 @@ namespace StatusScreenSite.Services
         public void Start(HttpingService svc)
         {
             _svc = svc;
-            _timezone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
+            Timezone = TimeZoneInfo.FindSystemTimeZoneById(Settings.TimeZone);
 
             using (var db = Db.Open())
             {
@@ -614,7 +614,7 @@ namespace StatusScreenSite.Services
 
         public DateTime GetStartOfLocalDayInUtc(DateTime dt)
         {
-            var offset = _timezone.GetUtcOffset(dt);
+            var offset = Timezone.GetUtcOffset(dt);
             dt = dt + offset; // specified UTC time as local time
             dt = new DateTime(dt.Year, dt.Month, dt.Day, 0, 0, 0, DateTimeKind.Utc); // start of day in local time - with a UTC kind because we're about to make it UTC
             dt = dt - offset; // start of local day in UTC time
@@ -623,7 +623,7 @@ namespace StatusScreenSite.Services
 
         public DateTime GetStartOfLocalMonthInUtc(DateTime dt)
         {
-            var offset = _timezone.GetUtcOffset(dt);
+            var offset = Timezone.GetUtcOffset(dt);
             dt = dt + offset; // specified UTC time as local time
             dt = new DateTime(dt.Year, dt.Month, 1, 0, 0, 0, DateTimeKind.Utc); // start of month in local time - with a UTC kind because we're about to make it UTC
             dt = dt - offset; // start of local month in UTC time
@@ -632,7 +632,7 @@ namespace StatusScreenSite.Services
 
         public DateTime GetStartOfLocalYearInUtc(DateTime dt)
         {
-            var offset = _timezone.GetUtcOffset(dt);
+            var offset = Timezone.GetUtcOffset(dt);
             dt = dt + offset; // specified UTC time as local time
             dt = new DateTime(dt.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc); // start of year in local time - with a UTC kind because we're about to make it UTC
             dt = dt - offset; // start of local month in UTC time
