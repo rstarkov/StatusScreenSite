@@ -239,9 +239,15 @@ namespace StatusScreenSite.Services
 
         private HttpResponse handleChartPage(HttpRequest request)
         {
+            var siteName = request.Url["server"] ?? throw new HttpNotFoundException();
+            var site = _targets.SingleOrDefault(t => t.Settings.InternalName == siteName) ?? throw new HttpNotFoundException();
+
             var html = new HTML(
                 new HEAD(),
-                new BODY { style = "background: #000; padding: 0; margin: 0;" }._(
+                new BODY { style = "background: #000; color: #fff; padding: 0; margin: 0;" }._(
+                    new DIV { style = "padding: 10px; font-family: Roboto, Arial, sans-serif;" }._(
+                        new H1(site.Settings.Name, new SPAN { style = "padding-left: 25px; font-size: 60%;" }._(site.Settings.Url))
+                    ),
                     new DIV { style = "padding: 10px; width: 100%; overflow: auto; box-sizing: border-box;" }._(
                         new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.QueryString },
                         new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.WithQuery("prc").WithQuery("max", "1").QueryString }
