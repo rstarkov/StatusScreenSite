@@ -261,8 +261,8 @@ namespace StatusScreenSite.Services
         {
             var siteName = request.Url["server"] ?? throw new HttpNotFoundException();
             var interval = EnumStrong.Parse<HttpingIntervalLength>(request.Url["interval"]);
-            var tsFrom = long.Parse(request.Url["from"]);
-            var tsTo = long.Parse(request.Url["to"]);
+            var tsFrom = request.Url["from"] == null ? 0 : long.Parse(request.Url["from"]);
+            var tsTo = request.Url["to"] == null ? 999_999_999_999_999 : long.Parse(request.Url["to"]);
             var maxOverride = request.Url["max"] == null ? (int?) null : int.Parse(request.Url["max"]);
             var logY = request.Url["log"] == "1";
             var percentiles = request.Url.QueryValues("prc").ToHashSet(); // if none: plot uptime instead
