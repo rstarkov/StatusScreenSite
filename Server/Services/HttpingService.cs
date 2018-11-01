@@ -630,31 +630,25 @@ namespace StatusScreenSite.Services
         public DateTime GetStartOfTwominute(DateTime dt) => new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, (dt.Minute / 2) * 2, 0, DateTimeKind.Utc);
         public DateTime GetStartOfHour(DateTime dt) => new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, 0, 0, DateTimeKind.Utc);
 
-        public DateTime GetStartOfLocalDayInUtc(DateTime dt)
+        public DateTime GetStartOfLocalDayInUtc(DateTime utc)
         {
-            var offset = Timezone.GetUtcOffset(dt);
-            dt = dt + offset; // specified UTC time as local time
-            dt = new DateTime(dt.Year, dt.Month, dt.Day, 0, 0, 0, DateTimeKind.Utc); // start of day in local time - with a UTC kind because we're about to make it UTC
-            dt = dt - offset; // start of local day in UTC time
-            return dt;
+            var local = TimeZoneInfo.ConvertTimeFromUtc(utc, Timezone);
+            local = new DateTime(local.Year, local.Month, local.Day, 0, 0, 0, DateTimeKind.Unspecified);
+            return TimeZoneInfo.ConvertTimeToUtc(local, Timezone);
         }
 
-        public DateTime GetStartOfLocalMonthInUtc(DateTime dt)
+        public DateTime GetStartOfLocalMonthInUtc(DateTime utc)
         {
-            var offset = Timezone.GetUtcOffset(dt);
-            dt = dt + offset; // specified UTC time as local time
-            dt = new DateTime(dt.Year, dt.Month, 1, 0, 0, 0, DateTimeKind.Utc); // start of month in local time - with a UTC kind because we're about to make it UTC
-            dt = dt - offset; // start of local month in UTC time
-            return dt;
+            var local = TimeZoneInfo.ConvertTimeFromUtc(utc, Timezone);
+            local = new DateTime(local.Year, local.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            return TimeZoneInfo.ConvertTimeToUtc(local, Timezone);
         }
 
-        public DateTime GetStartOfLocalYearInUtc(DateTime dt)
+        public DateTime GetStartOfLocalYearInUtc(DateTime utc)
         {
-            var offset = Timezone.GetUtcOffset(dt);
-            dt = dt + offset; // specified UTC time as local time
-            dt = new DateTime(dt.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc); // start of year in local time - with a UTC kind because we're about to make it UTC
-            dt = dt - offset; // start of local month in UTC time
-            return dt;
+            var local = TimeZoneInfo.ConvertTimeFromUtc(utc, Timezone);
+            local = new DateTime(local.Year, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+            return TimeZoneInfo.ConvertTimeToUtc(local, Timezone);
         }
 
         private void AddIntervalIfRequired(QueueViewable<HttpingPointInterval> queue, DateTime dtPrevUtc, DateTime dtCurUtc, Func<DateTime, DateTime> getIntervalStart, HttpingIntervalLength length)
