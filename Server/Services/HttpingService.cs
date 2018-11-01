@@ -242,15 +242,36 @@ namespace StatusScreenSite.Services
             var siteName = request.Url["server"] ?? throw new HttpNotFoundException();
             var site = _targets.SingleOrDefault(t => t.Settings.InternalName == siteName) ?? throw new HttpNotFoundException();
 
+            object prcLink(string prc)
+            {
+                var values = request.Url.QueryValues("prc").ToList();
+                var have = values.Contains(prc);
+                if (have)
+                    values.Remove(prc);
+                else
+                    values.Add(prc);
+                return new A(prc) { href = "." + request.Url.WithQuery("prc", values).QueryString, style = "margin-left: 10px;", class_ = $"toggle{(have ? " on" : "")}" };
+            }
+
             var html = new HTML(
-                new HEAD(new TITLE($"{siteName} - HttpingService")),
-                new BODY { style = "background: #000; color: #fff; padding: 0; margin: 0;" }._(
-                    new DIV { style = "padding: 10px; font-family: Roboto, Arial, sans-serif;" }._(
+                new HEAD(
+                    new TITLE($"{siteName} - HttpingService"),
+                    new STYLELiteral(@"
+                        a, a:visited { color: #eee }
+                        a.toggle { text-decoration: none; color: #888; }
+                        a.toggle.on { text-decoration: underline; color: #eee; }
+                    ")
+                ),
+                new BODY { style = "background: #000; color: #fff; padding: 10px; margin: 0; font-family: Roboto, Arial, sans-serif;" }._(
+                    new DIV(
                         new H1(site.Settings.Name, new SPAN { style = "padding-left: 25px; font-size: 60%;" }._(site.Settings.Url))
                     ),
-                    new DIV { style = "padding: 10px; width: 100%; overflow: auto; box-sizing: border-box;" }._(
+                    new DIV { style = "width: 100%; overflow: auto; box-sizing: border-box;" }._(
                         new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.QueryString },
                         new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.WithQuery("prc").WithQuery("max", "1").QueryString }
+                    ),
+                    new DIV(
+                        new P("Percentiles: ", prcLink("01"), prcLink("25"), prcLink("50"), prcLink("75"), prcLink("95"), prcLink("99"))
                     )
                 )
             );
