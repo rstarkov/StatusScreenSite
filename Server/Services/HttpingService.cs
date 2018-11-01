@@ -8,6 +8,7 @@ using System.Threading;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using RT.Servers;
+using RT.TagSoup;
 using RT.Util;
 using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
@@ -25,7 +26,10 @@ namespace StatusScreenSite.Services
             : base(server, serviceSettings)
         {
             _pingSvc = pingSvc;
-            server.AddUrlMapping(new UrlMapping(new UrlHook(path: "/HttpingService/ChartSvg", specificPath: true), handleChartSvg));
+            var resolver = new UrlResolver();
+            resolver.Add(new UrlHook(path: "/", specificPath: true), handleChartPage);
+            resolver.Add(new UrlHook(path: "/ChartSvg", specificPath: true), handleChartSvg);
+            server.AddUrlMapping(new UrlMapping(new UrlHook(path: "/HttpingService", specificPath: false), resolver.Handle));
         }
 
         public override void Start()
@@ -233,6 +237,20 @@ namespace StatusScreenSite.Services
             }
         }
 
+        private HttpResponse handleChartPage(HttpRequest request)
+        {
+            var html = new HTML(
+                new HEAD(),
+                new BODY { style = "background: #000; padding: 0; margin: 0;" }._(
+                    new DIV { style = "padding: 10px; width: 100%; overflow: auto; box-sizing: border-box;" }._(
+                        new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.QueryString },
+                        new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.WithQuery("prc").WithQuery("max", "1").QueryString }
+                    )
+                )
+            );
+            return HttpResponse.Html(html);
+        }
+
         private HttpResponse handleChartSvg(HttpRequest request)
         {
             var siteName = request.Url["server"] ?? throw new HttpNotFoundException();
@@ -398,7 +416,7 @@ namespace StatusScreenSite.Services
                 curX = curX - barGap + margin;
                 var height = groupLabelY + (groupBackground && groupLabelSize != null ? (groupLabelSize * (lineBoxMul - 1)) : 0) + margin;
                 return HttpResponse.Create(Ut.NewArray(
-                    $"<svg width='{curX}' height='{height}' style='border: 1px solid #999; background: #000;' xmlns='http://www.w3.org/2000/svg'><g>",
+                    $"<svg width='{curX}' height='{height}' style='background: #000;' xmlns='http://www.w3.org/2000/svg'><g>",
                     sb.ToString(),
                     "</g></svg>"
                 ), "image/svg+xml");
