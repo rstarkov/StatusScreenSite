@@ -243,7 +243,7 @@ namespace StatusScreenSite.Services
             var site = _targets.SingleOrDefault(t => t.Settings.InternalName == siteName) ?? throw new HttpNotFoundException();
 
             var html = new HTML(
-                new HEAD(),
+                new HEAD(new TITLE($"{siteName} - HttpingService")),
                 new BODY { style = "background: #000; color: #fff; padding: 0; margin: 0;" }._(
                     new DIV { style = "padding: 10px; font-family: Roboto, Arial, sans-serif;" }._(
                         new H1(site.Settings.Name, new SPAN { style = "padding-left: 25px; font-size: 60%;" }._(site.Settings.Url))
