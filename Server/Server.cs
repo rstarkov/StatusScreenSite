@@ -45,11 +45,16 @@ namespace StatusScreenSite
             server.ErrorHandler = exceptionHandler;
 
             _services.Add(new ReloadService(this, _settings.StaticPath));
-            _services.Add(new WeatherService(this, _settings.WeatherSettings));
-            _services.Add(new TimeService(this, _settings.TimeSettings));
-            _services.Add(new PingService(this, _settings.PingSettings));
-            _services.Add(new HttpingService(this, _settings.HttpingSettings, _services.OfType<PingService>().Single()));
-            _services.Add(new RouterService(this, _settings.RouterSettings));
+            if (_settings.WeatherSettings != null)
+                _services.Add(new WeatherService(this, _settings.WeatherSettings));
+            if (_settings.TimeSettings != null)
+                _services.Add(new TimeService(this, _settings.TimeSettings));
+            if (_settings.PingSettings != null)
+                _services.Add(new PingService(this, _settings.PingSettings));
+            if (_settings.HttpingSettings != null)
+                _services.Add(new HttpingService(this, _settings.HttpingSettings, _services.OfType<PingService>().Single()));
+            if (_settings.RouterSettings != null)
+                _services.Add(new RouterService(this, _settings.RouterSettings));
 
             Console.WriteLine("Initialising database...");
             var absoluteDbPath = Path.Combine(Path.GetDirectoryName(SettingsUtil.GetAttribute<Settings>().GetFileName()), _settings.DbFilePath);
