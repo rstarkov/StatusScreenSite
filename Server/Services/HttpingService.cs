@@ -530,6 +530,13 @@ namespace StatusScreenSite.Services
                     }
                 }
             }
+            var bad = db.Query<long>("SELECT StartTimestamp FROM TbHttpingInterval WHERE SiteId = @siteId AND IntervalLength = @length ORDER BY StartTimestamp", new { siteId = _siteId, length })
+                .Where(ts => ts != getStart(ts.FromDbDateTime()).ToDbDateTime());
+            foreach (var start in bad)
+            {
+                Console.WriteLine($"INCORRECT: {_siteId}, {length}, {start.FromDbDateTime()}");
+                db.Query("DELETE FROM TbHttpingInterval WHERE SiteId = @siteId AND IntervalLength = @length AND StartTimestamp = @start", new { siteId = _siteId, length, start });
+            }
         }
 
         private QueueViewable<HttpingPointInterval> loadRecentIntervals(SQLiteConnection db, HttpingIntervalLength length)
