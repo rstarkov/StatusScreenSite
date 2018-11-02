@@ -252,7 +252,12 @@ namespace StatusScreenSite.Services
                     values.Remove(prc);
                 else
                     values.Add(prc);
-                return new A(prc) { href = "." + request.Url.WithQuery("prc", values).QueryString, style = "margin-left: 10px;", class_ = $"toggle{(have ? " on" : "")}" };
+                return new A(prc) { href = "." + request.Url.WithQuery("prc", values).QueryString, class_ = $"toggle{(have ? " on" : "")}" };
+            }
+            object valLink(string name, string value, string label)
+            {
+                var have = request.Url[name] == value;
+                return new A(label) { href = "." + request.Url.WithQuery(name, have ? null : value).QueryString, class_ = $"toggle{(have ? " on" : "")}" };
             }
 
             var html = new HTML(
@@ -260,8 +265,9 @@ namespace StatusScreenSite.Services
                     new TITLE($"{siteName} - HttpingService"),
                     new STYLELiteral(@"
                         a, a:visited { color: #eee }
-                        a.toggle { text-decoration: none; color: #888; }
+                        a.toggle { text-decoration: none; color: #888; margin-left: 10px; }
                         a.toggle.on { text-decoration: underline; color: #eee; }
+                        div#controls > p > span { margin-right: 40px; white-space: nowrap; }
                     ")
                 ),
                 new BODY { style = "background: #000; color: #fff; padding: 10px; margin: 0; font-family: Roboto, Arial, sans-serif;" }._(
@@ -269,11 +275,15 @@ namespace StatusScreenSite.Services
                         new H1(site.Settings.Name, new SPAN { style = "padding-left: 25px; font-size: 60%;" }._(site.Settings.Url))
                     ),
                     new DIV { style = "width: 100%; overflow: auto; box-sizing: border-box;" }._(
-                        new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.QueryString },
+                        new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.QueryString }, new BR(),
                         new IMG { style = "border: 1px solid #555; margin-bottom: 30px", src = "ChartSvg" + request.Url.WithQuery("prc").WithQuery("max", "1").QueryString }
                     ),
-                    new DIV(
-                        new P("Percentiles: ", prcLink("01"), prcLink("25"), prcLink("50"), prcLink("75"), prcLink("95"), prcLink("99"))
+                    new DIV { id = "controls" }._(
+                        new P(
+                            new SPAN("Percentiles: ", prcLink("01"), prcLink("25"), prcLink("50"), prcLink("75"), prcLink("95"), prcLink("99")), " ",
+                            new SPAN("Interval: ", valLink("interval", "TwoMinutes", "2 min"), valLink("interval", "Hour", "hour"), valLink("interval", "Day", "day"), valLink("interval", "Month", "month")), " ",
+                            new SPAN("Group interval: ", valLink("groupInterval", "1", "+1"), valLink("groupInterval", "2", "+2"), valLink("groupInterval", "3", "+3"))
+                        )
                     )
                 )
             );
@@ -293,7 +303,8 @@ namespace StatusScreenSite.Services
             var barW = request.Url["barW"] == null ? 10.0 : double.Parse(request.Url["barW"]);
             var barGap = barW * (request.Url["barGap"] == null ? 0.2 : double.Parse(request.Url["barGap"]));
             var groupGap = barW * (request.Url["groupGap"] == null ? 0.8 : double.Parse(request.Url["groupGap"]));
-            var groupInterval = request.Url["groupInterval"] == null ? (interval + 1) : EnumStrong.Parse<HttpingIntervalLength>(request.Url["groupInterval"]);
+            var groupInterval = interval + (request.Url["groupInterval"] == null ? 1 : int.Parse(request.Url["groupInterval"]));
+            if (groupInterval > HttpingIntervalLength.Year) groupInterval = HttpingIntervalLength.Year;
             var xLabelSize = request.Url["xLabelSize"] == null ? (double?) null : double.Parse(request.Url["xLabelSize"]);
             var groupLabelSize = request.Url["groupLabelSize"] == null ? (double?) null : double.Parse(request.Url["groupLabelSize"]);
             var groupBackground = groupGap == 0;
@@ -330,7 +341,7 @@ namespace StatusScreenSite.Services
                 var intervalIncrement = interval == HttpingIntervalLength.TwoMinutes ? TimeSpan.FromMinutes(2) : interval == HttpingIntervalLength.Hour ? TimeSpan.FromHours(1)
                     : interval == HttpingIntervalLength.Day ? TimeSpan.FromHours(24 + 4 /* for DST changes */) : interval == HttpingIntervalLength.Month ? TimeSpan.FromDays(35) : throw new Exception();
                 var startOfInterval = tgt.GetStartFunc(interval);
-                var startOfGroup = tgt.GetStartFunc(interval + 1);
+                var startOfGroup = tgt.GetStartFunc(groupInterval);
                 var max = maxOverride ?? points.Max(pt => pt.MsResponsePrc50);
                 double curX = margin;
                 var curInterval = points[0].StartTimestamp.FromDbDateTime();
@@ -371,6 +382,8 @@ namespace StatusScreenSite.Services
                         groupLabel = $"{localStart:ddd dd MMM}";
                     else if (groupInterval == HttpingIntervalLength.Month)
                         groupLabel = $"{localStart:MMMM yyyy}";
+                    else if (groupInterval == HttpingIntervalLength.Year)
+                        groupLabel = $"{localStart:yyyy}";
                     if (groupBackground)
                         sb.Append($"<rect x='{prevGroupStart}' y='{groupLabelY - groupLabelSize}' width='{curX - barGap - prevGroupStart}' height='{groupLabelSize * lineBoxMul}' stroke-width='0' fill='#333'></rect>");
                     addXLabel((prevGroupStart + curX) / 2, true, groupLabel);
@@ -435,7 +448,7 @@ namespace StatusScreenSite.Services
                     else if (interval == HttpingIntervalLength.Day)
                         xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).Day.ToString();
                     else if (interval == HttpingIntervalLength.Month)
-                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).Month.ToString("MMM");
+                        xLabel = TimeZoneInfo.ConvertTimeFromUtc(curInterval, tgt.Timezone).ToString("MMM").Substring(0, 2);
                     addXLabel(curX + barW / 2, false, xLabel);
 
                     curX += barW + barGap;
