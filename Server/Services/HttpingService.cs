@@ -159,6 +159,8 @@ namespace StatusScreenSite.Services
         {
             if (curVersion == 0)
             {
+                if (db == null) return true;
+
                 db.Execute(@"CREATE TABLE TbHttpingSite (
                     SiteId INTEGER PRIMARY KEY,
                     InternalName TEXT NOT NULL

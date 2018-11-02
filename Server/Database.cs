@@ -47,7 +47,7 @@ namespace StatusScreenSite
             using (var db = Db.Open())
                 curVersion = db.Get<TbSchema>(service.ServiceName)?.SchemaVersion ?? 0;
 
-            while (true)
+            while (service.MigrateSchema(null, curVersion))
             {
                 var tempName = Util.GetNonexistentFileName(n => $"{_dbFilePath}.~{n}");
                 Ut.WaitSharingVio(() => File.Copy(_dbFilePath, tempName));

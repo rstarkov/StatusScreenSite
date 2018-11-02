@@ -165,6 +165,7 @@ namespace StatusScreenSite.Services
         {
             if (curVersion == 0)
             {
+                if (db == null) return true;
                 db.Execute($@"CREATE TABLE {nameof(TbRouterHistoryEntry)} (
                     {nameof(TbRouterHistoryEntry.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbRouterHistoryEntry.TxTotal)} BIGINT NOT NULL,

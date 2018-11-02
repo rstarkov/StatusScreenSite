@@ -146,6 +146,7 @@ namespace StatusScreenSite.Services
         {
             if (curVersion == 0)
             {
+                if (db == null) return true;
                 db.Execute($@"CREATE TABLE {nameof(TbWeatherTemperature)} (
                     {nameof(TbWeatherTemperature.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbWeatherTemperature.Temperature)} REAL NOT NULL

@@ -65,6 +65,7 @@ namespace StatusScreenSite.Services
         {
             if (curVersion == 0)
             {
+                if (db == null) return true;
                 db.Execute($@"CREATE TABLE {nameof(TbPingHistoryEntry)} (
                     {nameof(TbPingHistoryEntry.Timestamp)} INTEGER PRIMARY KEY,
                     {nameof(TbPingHistoryEntry.Ping)} INT NULL
