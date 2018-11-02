@@ -20,15 +20,13 @@ namespace StatusScreenSite
 
         public static void Initialise(string dbFilePath, IEnumerable<IService> services)
         {
-            _dbFilePath = dbFilePath;
-
             SqlMapperExtensions.TableNameMapper = type => type.Name;
 
-            if (!File.Exists(_dbFilePath))
+            if (!File.Exists(dbFilePath))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_dbFilePath));
-                SQLiteConnection.CreateFile(_dbFilePath);
-                using (var db = new SQLiteConnection($"Data Source={_dbFilePath};Version=3;").OpenAndReturn())
+                Directory.CreateDirectory(Path.GetDirectoryName(dbFilePath));
+                SQLiteConnection.CreateFile(dbFilePath);
+                using (var db = new SQLiteConnection($"Data Source={dbFilePath};Version=3;").OpenAndReturn())
                 {
                     db.Execute($@"CREATE TABLE {nameof(TbSchema)} (
                         {nameof(TbSchema.ServiceName)} TEXT NOT NULL PRIMARY KEY,
@@ -38,19 +36,22 @@ namespace StatusScreenSite
             }
 
             foreach (var service in services)
-                migrateServiceSchema(service);
+                migrateServiceSchema(service, dbFilePath);
+
+            // Set this last so that it's not possible to accidentally use the DB before it's fully initialised
+            _dbFilePath = dbFilePath;
         }
 
-        private static void migrateServiceSchema(IService service)
+        private static void migrateServiceSchema(IService service, string dbFilePath)
         {
             int curVersion;
-            using (var db = Db.Open())
+            using (var db = new SQLiteConnection($"Data Source={dbFilePath};Version=3;").OpenAndReturn())
                 curVersion = db.Get<TbSchema>(service.ServiceName)?.SchemaVersion ?? 0;
 
             while (service.MigrateSchema(null, curVersion))
             {
-                var tempName = Util.GetNonexistentFileName(n => $"{_dbFilePath}.~{n}");
-                Ut.WaitSharingVio(() => File.Copy(_dbFilePath, tempName));
+                var tempName = Util.GetNonexistentFileName(n => $"{dbFilePath}.~{n}");
+                Ut.WaitSharingVio(() => File.Copy(dbFilePath, tempName));
 
                 bool changesMade = false;
                 using (var db = new SQLiteConnection($"Data Source={tempName};Version=3;").OpenAndReturn())
@@ -73,8 +74,8 @@ namespace StatusScreenSite
                     return;
                 }
 
-                Ut.WaitSharingVio(() => File.Delete(_dbFilePath));
-                Ut.WaitSharingVio(() => File.Move(tempName, _dbFilePath));
+                Ut.WaitSharingVio(() => File.Delete(dbFilePath));
+                Ut.WaitSharingVio(() => File.Move(tempName, dbFilePath));
             }
         }
 
