@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -376,7 +376,7 @@ namespace StatusScreenSite.Services
                     : interval == HttpingIntervalLength.Day ? TimeSpan.FromHours(24 + 4 /* for DST changes */) : interval == HttpingIntervalLength.Month ? TimeSpan.FromDays(35) : throw new Exception();
                 var startOfInterval = tgt.GetStartFunc(interval);
                 var startOfGroup = tgt.GetStartFunc(groupInterval);
-                var max = maxOverride ?? points.Max(pt => pt.MsResponsePrc50);
+                var max = maxOverride ?? (percentiles.Count == 0 ? 1 : points.Max(pt => pt.MsResponsePrc95));
                 double curX = margin;
                 var curInterval = points[0].StartTimestamp.FromDbDateTime();
                 var lastInterval = points[points.Count - 1].StartTimestamp.FromDbDateTime();
