@@ -239,6 +239,9 @@ namespace StatusScreenSite.Services
             }
         }
 
+        private decimal _defaultBarW = 10;
+        private decimal _defaultBarH = 80;
+
         private HttpResponse handleChartPage(HttpRequest request)
         {
             var siteName = request.Url["server"] ?? throw new HttpNotFoundException();
@@ -254,10 +257,32 @@ namespace StatusScreenSite.Services
                     values.Add(prc);
                 return new A(prc) { href = "." + request.Url.WithQuery("prc", values).QueryString, class_ = $"toggle{(have ? " on" : "")}" };
             }
-            object valLink(string name, string value, string label)
+            object valLink(string name, string value, string label, bool isDefault = false)
             {
-                var have = request.Url[name] == value;
-                return new A(label) { href = "." + request.Url.WithQuery(name, have ? null : value).QueryString, class_ = $"toggle{(have ? " on" : "")}" };
+                var have = (request.Url[name] == value) || (request.Url[name] == null && isDefault);
+                return new A(label) { href = "." + request.Url.WithQuery(name, value).QueryString, class_ = $"toggle{(have ? " on" : "")}" };
+            }
+            object plusLink(string name, string label, decimal inc, decimal dfault)
+            {
+                var have = request.Url[name] != null && request.Url[name] != "0";
+                return new A(label) { href = "." + request.Url.WithQuery(name, ((have ? decimal.Parse(request.Url[name]) : dfault) + inc).ToString()).QueryString, class_ = $"toggle{(have ? " on" : "")}" };
+            }
+            object spanOffIncDecLinks(string heading, string name, string stepLabel, decimal step, decimal dfault)
+            {
+                var have = request.Url[name] != null && request.Url[name] != "0";
+                var items = new List<object>();
+                items.Add(heading);
+                items.Add(new A("Off") { href = "." + request.Url.WithQuery(name, (string) null).QueryString, class_ = $"toggle{(!have ? " on" : "")}" });
+                if (have)
+                {
+                    items.Add(plusLink(name, "−" + stepLabel, -step, dfault));
+                    items.Add(plusLink(name, "+" + stepLabel, step, dfault));
+                }
+                else
+                {
+                    items.Add(new A("On") { href = "." + request.Url.WithQuery(name, dfault.ToString()).QueryString, class_ = "toggle" });
+                }
+                return new SPAN(items);
             }
 
             var html = new HTML(
@@ -267,6 +292,7 @@ namespace StatusScreenSite.Services
                         a, a:visited { color: #eee }
                         a.toggle { text-decoration: none; color: #888; margin-left: 10px; }
                         a.toggle.on { text-decoration: underline; color: #eee; }
+                        div#controls > p { margin-top: 20px; }
                         div#controls > p > span { margin-right: 40px; white-space: nowrap; }
                     ")
                 ),
@@ -282,7 +308,15 @@ namespace StatusScreenSite.Services
                         new P(
                             new SPAN("Percentiles: ", prcLink("01"), prcLink("25"), prcLink("50"), prcLink("75"), prcLink("95"), prcLink("99")), " ",
                             new SPAN("Interval: ", valLink("interval", "TwoMinutes", "2 min"), valLink("interval", "Hour", "hour"), valLink("interval", "Day", "day"), valLink("interval", "Month", "month")), " ",
-                            new SPAN("Group interval: ", valLink("groupInterval", "1", "+1"), valLink("groupInterval", "2", "+2"), valLink("groupInterval", "3", "+3"))
+                            new SPAN("Group interval: ", valLink("groupInterval", "1", "+1", true), valLink("groupInterval", "2", "+2"), valLink("groupInterval", "3", "+3")), " ",
+                            new SPAN("Bar width: ", plusLink("barW", "−1", -1, _defaultBarW), plusLink("barW", "+1", 1, _defaultBarW)), " ",
+                            new SPAN("Bar height: ", plusLink("barH", "−1", -5, _defaultBarH), plusLink("barH", "+1", 5, _defaultBarH))
+                        ),
+                        new P(
+                            spanOffIncDecLinks("Bar gap: ", "barGap", "0.05", 0.05m, 0.2m), " ",
+                            spanOffIncDecLinks("Group gap: ", "groupGap", "0.1", 0.1m, 0.8m), " ",
+                            spanOffIncDecLinks("Bar label size: ", "xLabelSize", "1", 1, 10), " ",
+                            spanOffIncDecLinks("Group label size: ", "groupLabelSize", "1", 1, 10)
                         )
                     )
                 )
@@ -299,14 +333,14 @@ namespace StatusScreenSite.Services
             var maxOverride = request.Url["max"] == null ? (int?) null : int.Parse(request.Url["max"]);
             var logY = request.Url["log"] == "1";
             var percentiles = request.Url.QueryValues("prc").ToHashSet(); // if none: plot uptime instead
-            var barH = request.Url["barH"] == null ? 80.0 : double.Parse(request.Url["barH"]);
-            var barW = request.Url["barW"] == null ? 10.0 : double.Parse(request.Url["barW"]);
-            var barGap = barW * (request.Url["barGap"] == null ? 0.2 : double.Parse(request.Url["barGap"]));
-            var groupGap = barW * (request.Url["groupGap"] == null ? 0.8 : double.Parse(request.Url["groupGap"]));
-            var groupInterval = interval + (request.Url["groupInterval"] == null ? 1 : int.Parse(request.Url["groupInterval"]));
+            var barH = request.Url["barH"] == null ? (double) _defaultBarH : double.Parse(request.Url["barH"]);
+            var barW = request.Url["barW"] == null ? (double) _defaultBarW : double.Parse(request.Url["barW"]);
+            var barGap = barW * double.Parse(request.Url["barGap"] ?? "0");
+            var groupGap = barW * double.Parse(request.Url["groupGap"] ?? "0");
+            var groupInterval = interval + int.Parse(request.Url["groupInterval"] ?? "1");
             if (groupInterval > HttpingIntervalLength.Year) groupInterval = HttpingIntervalLength.Year;
-            var xLabelSize = request.Url["xLabelSize"] == null ? (double?) null : double.Parse(request.Url["xLabelSize"]);
-            var groupLabelSize = request.Url["groupLabelSize"] == null ? (double?) null : double.Parse(request.Url["groupLabelSize"]);
+            var xLabelSize = (double?) double.Parse(request.Url["xLabelSize"] ?? "0");
+            var groupLabelSize = (double?) double.Parse(request.Url["groupLabelSize"] ?? "0");
             var groupBackground = groupGap == 0;
 
             if (xLabelSize <= 0) xLabelSize = null;
